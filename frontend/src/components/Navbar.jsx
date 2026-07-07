@@ -58,12 +58,20 @@ export default function Navbar() {
             </svg>
           </button>
 
-          <Link to="/" className="flex items-center">
+          <Link to="/" className="flex items-center gap-2">
             <img
               src="/logo.png"
               alt="Dominion Clothing Logo"
-              className="h-16 w-auto object-contain max-h-20"
+              className="h-16 w-auto object-contain transition-transform hover:scale-105"
             />
+            <div className="flex flex-col">
+              <span className="font-extrabold text-[14px] text-navy tracking-[0.18em] font-display uppercase leading-none">
+                DOMINION
+              </span>
+              <span className="text-[8px] text-gray-400 font-bold uppercase tracking-[0.25em] mt-1 leading-none">
+                CLOTHING
+              </span>
+            </div>
           </Link>
         </div>
 
@@ -240,11 +248,21 @@ export default function Navbar() {
           />
           <div className="fixed top-0 left-0 h-full w-[80%] max-w-[280px] bg-white z-50 shadow-2xl mobile-menu-enter flex flex-col">
             <div className="flex items-center justify-between h-20 px-5 border-b border-line bg-[#FAFAF8]/80">
-              <img
-                src="/logo.png"
-                alt="Logo"
-                className="h-10 w-auto object-contain"
-              />
+              <div className="flex items-center gap-2">
+                <img
+                  src="/logo.png"
+                  alt="Logo"
+                  className="h-12 w-auto object-contain"
+                />
+                <div className="flex flex-col">
+                  <span className="font-extrabold text-[12px] text-navy tracking-[0.15em] font-display uppercase leading-none">
+                    DOMINION
+                  </span>
+                  <span className="text-[7px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1 leading-none">
+                    CLOTHING
+                  </span>
+                </div>
+              </div>
               <button
                 onClick={() => setMenuOpen(false)}
                 className="text-ink hover:bg-paper transition-colors px-2.5 py-1 rounded text-lg leading-none"
