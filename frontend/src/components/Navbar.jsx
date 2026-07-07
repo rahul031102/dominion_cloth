@@ -8,7 +8,7 @@ export default function Navbar() {
   const { count, setIsOpen } = useCart();
   const { user, logout } = useAuth();
   const { showToast } = useToast();
-
+  
   const [menuOpen, setMenuOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showShopDropdown, setShowShopDropdown] = useState(false);
@@ -42,211 +42,213 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-line shadow-sm">
-      {/* Top Main Navbar */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-20">
-
-        {/* Left: Mobile Menu Trigger & Logo */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setMenuOpen(true)}
-            className="lg:hidden text-ink p-1.5 hover:bg-paper rounded"
-            aria-label="Open menu"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 6h18M3 12h18M3 18h18" />
-            </svg>
-          </button>
-
-          <Link to="/" className="flex items-center gap-2">
-            <img
-              src="/logo.png"
-              alt="Dominion Clothing Logo"
-              className="h-16 w-auto object-contain transition-transform hover:scale-105"
-            />
-            <div className="flex flex-col">
-              <span className="font-extrabold text-[14px] text-navy tracking-[0.18em] font-display uppercase leading-none">
-                DOMINION
-              </span>
-              <span className="text-[8px] text-gray-400 font-bold uppercase tracking-[0.25em] mt-1 leading-none">
-                CLOTHING
-              </span>
-            </div>
-          </Link>
-        </div>
-
-        {/* Center-Left: Shop Dropdown + quick links */}
-        <nav className="hidden lg:flex items-center gap-6 h-full">
-          <div
-            className="relative h-full"
-            onMouseEnter={() => setShowShopDropdown(true)}
-            onMouseLeave={() => setShowShopDropdown(false)}
-          >
-            <button className="font-bold text-[12px] uppercase tracking-widest text-gray-700 hover:text-navy transition-colors h-full flex items-center gap-1 px-1">
-              Shop
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <path d="M6 9l6 6 6-6" />
+    <>
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-line shadow-sm">
+        {/* Top Main Navbar */}
+        <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-20">
+          
+          {/* Left: Mobile Menu Trigger & Logo */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="lg:hidden text-ink p-1.5 hover:bg-paper rounded"
+              aria-label="Open menu"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 6h18M3 12h18M3 18h18" />
               </svg>
             </button>
-            {showShopDropdown && (
-              <div className="absolute top-full left-0 bg-white border border-line rounded shadow-lg py-2 w-48 grid grid-cols-1 z-50">
-                {navLinks.map((l) => (
-                  <Link
-                    key={l.label}
-                    to={l.to}
-                    className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 hover:bg-paper hover:text-navy transition-colors"
-                  >
-                    {l.label}
-                  </Link>
-                ))}
+
+            <Link to="/" className="flex items-center gap-2">
+              <img
+                src="/logo.png"
+                alt="Dominion Clothing Logo"
+                className="h-16 w-auto object-contain transition-transform hover:scale-105"
+              />
+              <div className="flex flex-col">
+                <span className="font-extrabold text-[14px] text-navy tracking-[0.18em] font-display uppercase leading-none">
+                  DOMINION
+                </span>
+                <span className="text-[8px] text-gray-400 font-bold uppercase tracking-[0.25em] mt-1 leading-none">
+                  CLOTHING
+                </span>
               </div>
-            )}
-          </div>
-          <Link to="/products?cat=New" className="font-bold text-[12px] uppercase tracking-widest text-gray-700 hover:text-navy transition-colors h-full flex items-center px-1">
-            New In
-          </Link>
-          <Link to="/products?cat=Sale" className="font-bold text-[12px] uppercase tracking-widest text-crimson hover:text-navy transition-colors h-full flex items-center px-1">
-            Sale
-          </Link>
-        </nav>
-
-        {/* Center-Right: Search Input Box */}
-        <form onSubmit={handleSearchSubmit} className="hidden md:flex items-center flex-1 max-w-xs relative">
-          <span className="absolute left-3.5 text-gray-400">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </span>
-          <input
-            type="text"
-            value={searchVal}
-            onChange={(e) => setSearchVal(e.target.value)}
-            placeholder="Search products, brands..."
-            className="w-full bg-[#FAFAF8] text-ink placeholder-gray-400 text-xs border border-line rounded pl-10 pr-4 py-2.5 focus:outline-none focus:bg-white focus:border-navy transition-all"
-          />
-        </form>
-
-        {/* Right Side Actions */}
-        <div className="flex items-center gap-5 md:gap-6">
-
-          {/* Admin Console Link (desktop shortcut) */}
-          {user && user.isAdmin && (
-            <Link
-              to="/admin"
-              className="hidden lg:flex items-center gap-1 bg-[#1B2A4A]/10 border border-[#1B2A4A]/25 text-navy font-extrabold text-[10px] uppercase px-3 py-1.5 rounded-sm tracking-wider hover:bg-navy hover:text-white transition-all shadow-sm"
-            >
-              Admin Panel
             </Link>
-          )}
+          </div>
 
-          {/* Profile / Account Dropdown */}
-          <div className="relative">
+          {/* Center-Left: Shop Dropdown + quick links */}
+          <nav className="hidden lg:flex items-center gap-6 h-full">
             <div
-              onClick={() => {
-                if (user) {
-                  setShowProfileDropdown(!showProfileDropdown);
-                } else {
-                  navigate("/login");
-                }
-              }}
-              className="flex flex-col items-center cursor-pointer text-ink hover:text-navy transition-colors"
+              className="relative h-full"
+              onMouseEnter={() => setShowShopDropdown(true)}
+              onMouseLeave={() => setShowShopDropdown(false)}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="mb-1">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
+              <button className="font-bold text-[12px] uppercase tracking-widest text-gray-700 hover:text-navy transition-colors h-full flex items-center gap-1 px-1">
+                Shop
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+              {showShopDropdown && (
+                <div className="absolute top-full left-0 bg-white border border-line rounded shadow-lg py-2 w-48 grid grid-cols-1 z-50">
+                  {navLinks.map((l) => (
+                    <Link
+                      key={l.label}
+                      to={l.to}
+                      className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 hover:bg-[#FAFAF8] hover:text-navy transition-colors"
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Link to="/products?cat=New" className="font-bold text-[12px] uppercase tracking-widest text-gray-700 hover:text-navy transition-colors h-full flex items-center px-1">
+              New In
+            </Link>
+            <Link to="/products?cat=Sale" className="font-bold text-[12px] uppercase tracking-widest text-crimson hover:text-navy transition-colors h-full flex items-center px-1">
+              Sale
+            </Link>
+          </nav>
+
+          {/* Center-Right: Search Input Box */}
+          <form onSubmit={handleSearchSubmit} className="hidden md:flex items-center flex-1 max-w-xs relative">
+            <span className="absolute left-3.5 text-gray-400">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-              <span className="text-[9px] font-bold tracking-wider uppercase">
-                {user ? user.name.split(" ")[0] : "Profile"}
-              </span>
+            </span>
+            <input
+              type="text"
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
+              placeholder="Search products, brands..."
+              className="w-full bg-[#FAFAF8] text-ink placeholder-gray-400 text-xs border border-line rounded pl-10 pr-4 py-2.5 focus:outline-none focus:bg-white focus:border-navy transition-all"
+            />
+          </form>
+
+          {/* Right Side Actions */}
+          <div className="flex items-center gap-5 md:gap-6">
+            
+            {/* Admin Console Link (desktop shortcut) */}
+            {user && user.isAdmin && (
+              <Link 
+                to="/admin" 
+                className="hidden lg:flex items-center gap-1 bg-[#1B2A4A]/10 border border-[#1B2A4A]/25 text-navy font-extrabold text-[10px] uppercase px-3 py-1.5 rounded-sm tracking-wider hover:bg-navy hover:text-white transition-all shadow-sm"
+              >
+                Admin Panel
+              </Link>
+            )}
+
+            {/* Profile / Account Dropdown */}
+            <div className="relative">
+              <div
+                onClick={() => {
+                  if (user) {
+                    setShowProfileDropdown(!showProfileDropdown);
+                  } else {
+                    navigate("/login");
+                  }
+                }}
+                className="flex flex-col items-center cursor-pointer text-ink hover:text-navy transition-colors"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="mb-1">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span className="text-[9px] font-bold tracking-wider uppercase">
+                  {user ? user.name.split(" ")[0] : "Profile"}
+                </span>
+              </div>
+
+              {/* Profile Dropdown Menu */}
+              {showProfileDropdown && user && (
+                <div className="absolute right-0 mt-3 w-48 bg-white border border-line rounded shadow-lg py-2 z-50 text-xs text-ink font-semibold">
+                  <div className="px-4 py-2 border-b border-line font-bold text-gray-500 uppercase tracking-widest text-[9px]">
+                    Account: {user.name}
+                  </div>
+                  {user.isAdmin && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setShowProfileDropdown(false)}
+                      className="block px-4 py-2 text-ink hover:bg-[#FAFAF8] hover:text-navy transition-colors uppercase tracking-wide lg:hidden font-bold"
+                    >
+                      Admin Panel
+                  </Link>
+                  )}
+                  <button
+                    onClick={() => {
+                      logout();
+                      setShowProfileDropdown(false);
+                      showToast("Signed out successfully.");
+                      navigate("/");
+                    }}
+                    className="w-full text-left px-4 py-2 text-crimson hover:bg-[#FAFAF8] transition-colors uppercase tracking-wide font-bold"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* Profile Dropdown Menu */}
-            {showProfileDropdown && user && (
-              <div className="absolute right-0 mt-3 w-48 bg-white border border-line rounded shadow-lg py-2 z-50 text-xs text-ink font-semibold">
-                <div className="px-4 py-2 border-b border-line font-bold text-gray-500 uppercase tracking-widest text-[9px]">
-                  Account: {user.name}
-                </div>
-                {user.isAdmin && (
-                  <Link
-                    to="/admin"
-                    onClick={() => setShowProfileDropdown(false)}
-                    className="block px-4 py-2 text-ink hover:bg-[#FAFAF8] hover:text-navy transition-colors uppercase tracking-wide lg:hidden font-bold"
-                  >
-                    Admin Panel
-                  </Link>
-                )}
-                <button
-                  onClick={() => {
-                    logout();
-                    setShowProfileDropdown(false);
-                    showToast("Signed out successfully.");
-                    navigate("/");
-                  }}
-                  className="w-full text-left px-4 py-2 text-crimson hover:bg-[#FAFAF8] transition-colors uppercase tracking-wide font-bold"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
+            {/* New In */}
+            <Link to="/products?cat=New" className="flex flex-col items-center cursor-pointer text-ink hover:text-navy transition-colors">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="mb-1">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span className="text-[9px] font-bold tracking-wider uppercase">New In</span>
+            </Link>
+
+            {/* Shopping Bag */}
+            <button
+              onClick={() => setIsOpen(true)}
+              className="relative flex flex-col items-center text-ink hover:text-navy transition-colors"
+              aria-label="Open bag"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="mb-1">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+              <span className="text-[9px] font-bold tracking-wider uppercase">Bag</span>
+              {count > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-navy text-white text-[8px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center animate-pulse">
+                  {count}
+                </span>
+              )}
+            </button>
           </div>
-
-          {/* New In */}
-          <Link to="/products?cat=New" className="flex flex-col items-center cursor-pointer text-ink hover:text-navy transition-colors">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="mb-1">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            <span className="text-[9px] font-bold tracking-wider uppercase">New In</span>
-          </Link>
-
-          {/* Shopping Bag */}
-          <button
-            onClick={() => setIsOpen(true)}
-            className="relative flex flex-col items-center text-ink hover:text-navy transition-colors"
-            aria-label="Open bag"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="mb-1">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 0 1-8 0" />
-            </svg>
-            <span className="text-[9px] font-bold tracking-wider uppercase">Bag</span>
-            {count > 0 && (
-              <span className="absolute -top-1.5 -right-2 bg-navy text-white text-[8px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center animate-pulse">
-                {count}
-              </span>
-            )}
-          </button>
         </div>
-      </div>
 
-      {/* Mobile Search Bar */}
-      <div className="block md:hidden px-4 pb-3 bg-white">
-        <form onSubmit={handleSearchSubmit} className="relative w-full flex items-center">
-          <span className="absolute left-3.5 text-gray-400">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </span>
-          <input
-            type="text"
-            value={searchVal}
-            onChange={(e) => setSearchVal(e.target.value)}
-            placeholder="Search products, brands..."
-            className="w-full bg-paper text-ink placeholder-gray-400 text-xs border border-line rounded pl-9 pr-4 py-2 focus:outline-none focus:border-navy transition-all"
-          />
-        </form>
-      </div>
+        {/* Mobile Search Bar */}
+        <div className="block md:hidden px-4 pb-3 bg-white">
+          <form onSubmit={handleSearchSubmit} className="relative w-full flex items-center">
+            <span className="absolute left-3.5 text-gray-400">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
+              placeholder="Search products, brands..."
+              className="w-full bg-paper text-ink placeholder-gray-400 text-xs border border-line rounded pl-9 pr-4 py-2 focus:outline-none focus:border-navy transition-all"
+            />
+          </form>
+        </div>
+      </header>
 
-      {/* Slide-out Drawer Navigation (Mobile/Tablet) */}
+      {/* Slide-out Drawer Navigation (Mobile/Tablet) - Kept OUTSIDE the header backdrop-blur stacking context */}
       {menuOpen && (
         <>
           <div
             onClick={() => setMenuOpen(false)}
             className="fixed inset-0 bg-black/40 z-40 transition-opacity"
           />
-          <div className="fixed top-0 left-0 h-full w-[80%] max-w-[280px] bg-white z-50 shadow-2xl mobile-menu-enter flex flex-col">
+          <div className="fixed top-0 left-0 h-screen w-[80%] max-w-[280px] bg-white z-50 shadow-2xl mobile-menu-enter flex flex-col">
             <div className="flex items-center justify-between h-20 px-5 border-b border-line bg-[#FAFAF8]/80">
               <div className="flex items-center gap-2">
                 <img
@@ -307,6 +309,6 @@ export default function Navbar() {
           </div>
         </>
       )}
-    </header>
+    </>
   );
 }
