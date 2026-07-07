@@ -253,29 +253,39 @@ export default function Navbar() {
               </button>
             </div>
 
-            <div className="px-5 py-4 bg-[#FAFAF8]/50 border-b border-line text-[10px] font-bold text-navy tracking-widest uppercase">
+            <div className="flex gap-2 px-4 pt-4 pb-1">
+              <Link to="/products?cat=New" onClick={() => setMenuOpen(false)} className="flex-1 flex items-center justify-center gap-1.5 bg-navy text-white text-[10px] font-extrabold uppercase tracking-wider py-2.5 rounded-sm">
+                New In
+              </Link>
+              <Link to="/products?cat=Sale" onClick={() => setMenuOpen(false)} className="flex-1 flex items-center justify-center gap-1.5 bg-crimson text-white text-[10px] font-extrabold uppercase tracking-wider py-2.5 rounded-sm">
+                Sale
+              </Link>
+            </div>
+
+            <div className="px-5 pt-4 pb-2 text-[10px] font-bold text-navy tracking-widest uppercase">
               Shop Categories
             </div>
 
-            <nav className="flex-1 overflow-y-auto flex flex-col px-3 py-2 space-y-1">
-              <Link
-                to="/products"
-                onClick={() => setMenuOpen(false)}
-                className="text-ink text-xs uppercase tracking-wider font-semibold px-4 py-3 rounded hover:bg-paper hover:text-navy transition-colors"
-              >
+            <nav className="flex-1 overflow-y-auto flex flex-col px-3 py-1 space-y-0.5">
+              <Link to="/products" onClick={() => setMenuOpen(false)} className="text-ink text-xs uppercase tracking-wider font-semibold px-4 py-3 rounded hover:bg-paper hover:text-navy transition-colors">
                 Shop All
               </Link>
               {navLinks.map((l) => (
-                <Link
-                  key={l.label}
-                  to={l.to}
-                  onClick={() => setMenuOpen(false)}
-                  className="text-gray-700 text-xs uppercase tracking-wider font-semibold px-4 py-3 rounded hover:bg-paper hover:text-navy transition-colors border-l-2 border-transparent hover:border-navy"
-                >
+                <Link key={l.label} to={l.to} onClick={() => setMenuOpen(false)} className="text-gray-700 text-xs uppercase tracking-wider font-semibold px-4 py-3 rounded hover:bg-paper hover:text-navy transition-colors border-l-2 border-transparent hover:border-navy">
                   {l.label}
                 </Link>
               ))}
             </nav>
+
+            <div className="border-t border-line px-5 py-4 bg-[#F4F2EC]/50">
+              {user ? (
+                <div className="text-xs font-bold text-navy uppercase">Hi, {user.name.split(" ")[0]}</div>
+              ) : (
+                <Link to="/login" onClick={() => setMenuOpen(false)} className="flex items-center justify-center bg-navy text-white text-[10px] font-extrabold uppercase tracking-wider py-2.5 rounded-sm">
+                  Login / Sign Up
+                </Link>
+              )}
+            </div>
           </div>
         </>
       )}
