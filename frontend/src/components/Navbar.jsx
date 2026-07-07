@@ -115,7 +115,7 @@ export default function Navbar() {
             value={searchVal}
             onChange={(e) => setSearchVal(e.target.value)}
             placeholder="Search products, brands..."
-            className="w-full bg-[#FAFAF8] text-ink placeholder-gray-400 text-xs border border-line rounded pl-10 pr-4 py-2.5 focus:outline-none focus:bg-white focus:border-navy transition-all"
+            className="w-full bg-[#F4F2EC] text-ink placeholder-gray-400 text-xs border border-line rounded pl-10 pr-4 py-2.5 focus:outline-none focus:bg-white focus:border-navy transition-all"
           />
         </form>
 
@@ -163,7 +163,7 @@ export default function Navbar() {
                   <Link
                     to="/admin"
                     onClick={() => setShowProfileDropdown(false)}
-                    className="block px-4 py-2 text-ink hover:bg-[#FAFAF8] hover:text-navy transition-colors uppercase tracking-wide lg:hidden font-bold"
+                    className="block px-4 py-2 text-ink hover:bg-[#F4F2EC] hover:text-navy transition-colors uppercase tracking-wide lg:hidden font-bold"
                   >
                     Admin Panel
                   </Link>
@@ -175,7 +175,7 @@ export default function Navbar() {
                     showToast("Signed out successfully.");
                     navigate("/");
                   }}
-                  className="w-full text-left px-4 py-2 text-crimson hover:bg-[#FAFAF8] transition-colors uppercase tracking-wide font-bold"
+                  className="w-full text-left px-4 py-2 text-crimson hover:bg-[#F4F2EC] transition-colors uppercase tracking-wide font-bold"
                 >
                   Logout
                 </button>
@@ -239,7 +239,7 @@ export default function Navbar() {
             className="fixed inset-0 bg-black/40 z-40 transition-opacity"
           />
           <div className="fixed top-0 left-0 h-full w-[80%] max-w-[280px] bg-white z-50 shadow-2xl mobile-menu-enter flex flex-col">
-            <div className="flex items-center justify-between h-20 px-5 border-b border-line bg-[#FAFAF8]/80">
+            <div className="flex items-center justify-between h-20 px-5 border-b border-line bg-[#F4F2EC]/80">
               <img 
                 src="/logo.png" 
                 alt="Logo" 
@@ -253,7 +253,7 @@ export default function Navbar() {
               </button>
             </div>
             
-            <div className="px-5 py-4 bg-[#FAFAF8]/50 border-b border-line text-[10px] font-bold text-navy tracking-widest uppercase">
+            <div className="px-5 py-4 bg-[#F4F2EC]/50 border-b border-line text-[10px] font-bold text-navy tracking-widest uppercase">
               Shop Categories
             </div>
             

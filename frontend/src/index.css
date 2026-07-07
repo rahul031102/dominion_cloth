@@ -4,7 +4,7 @@
 
 ::selection {
   background: #1b2a4a;
-  color: #fafaf8;
+  color: #f4f2ec;
 }
 
 .card-lift {
@@ -72,7 +72,7 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #fafaf8;
+  background: #f4f2ec;
 }
 ::-webkit-scrollbar-thumb {
   background: #e5e1d8;

@@ -299,7 +299,7 @@ export default function AdminDashboard() {
           <div className="bg-white border border-line rounded overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#FAFAF8] border-b border-line text-navy uppercase tracking-wider font-bold">
+                <thead className="bg-[#F4F2EC] border-b border-line text-navy uppercase tracking-wider font-bold">
                   <tr>
                     <th className="px-6 py-4">Item details</th>
                     <th className="px-6 py-4">Category</th>
