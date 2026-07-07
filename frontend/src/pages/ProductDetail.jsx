@@ -17,14 +17,23 @@ export default function ProductDetail() {
   useEffect(() => {
     setLoading(true);
     setProduct(null);
-    fetchProductById(id).then((p) => {
-      setProduct(p);
-      setSelectedSize(p.sizes?.[0] || null);
-      setLoading(false);
-      fetchProducts(p.category)
-        .then((all) => setRelated(all.filter((x) => x._id !== p._id).slice(0, 4)))
-        .catch(() => setRelated([]));
-    });
+    fetchProductById(id)
+      .then((p) => {
+        if (!p) {
+          setLoading(false);
+          return;
+        }
+        setProduct(p);
+        setSelectedSize(p.sizes?.[0] || null);
+        setLoading(false);
+        fetchProducts(p.category)
+          .then((all) => setRelated(all.filter((x) => x._id !== p._id).slice(0, 4)))
+          .catch(() => setRelated([]));
+      })
+      .catch(() => {
+        setProduct(null);
+        setLoading(false);
+      });
   }, [id]);
 
   const handleAdd = () => {
@@ -32,7 +41,7 @@ export default function ProductDetail() {
     showToast(`Added "${product.name}" to your bag`);
   };
 
-  if (loading || !product) {
+  if (loading) {
     return (
       <section className="max-w-7xl mx-auto px-4 md:px-8 pt-8 pb-20 bg-paper text-ink">
         <div className="skeleton h-4 w-24 rounded mb-6" />
@@ -46,6 +55,23 @@ export default function ProductDetail() {
             <div className="skeleton h-12 w-full rounded" />
           </div>
         </div>
+      </section>
+    );
+  }
+
+  if (!product) {
+    return (
+      <section className="max-w-7xl mx-auto px-4 md:px-8 py-24 text-center bg-paper text-ink font-body">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-4 text-navy">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <h2 className="text-lg font-bold text-ink uppercase tracking-wider">Product Not Found</h2>
+        <p className="text-xs text-gray-500 mt-2">The product you are looking for might have been removed or does not exist.</p>
+        <Link to="/products" className="mt-6 inline-block bg-navy text-white text-xs font-bold px-6 py-3 rounded uppercase tracking-wider hover:opacity-90 transition-all">
+          Back to Shop
+        </Link>
       </section>
     );
   }
