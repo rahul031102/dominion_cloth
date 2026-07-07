@@ -8,7 +8,7 @@ export default function Navbar() {
   const { count, setIsOpen } = useCart();
   const { user, logout } = useAuth();
   const { showToast } = useToast();
-  
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showShopDropdown, setShowShopDropdown] = useState(false);
@@ -45,7 +45,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-line shadow-sm">
       {/* Top Main Navbar */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-20">
-        
+
         {/* Left: Mobile Menu Trigger & Logo */}
         <div className="flex items-center gap-3">
           <button
@@ -59,10 +59,10 @@ export default function Navbar() {
           </button>
 
           <Link to="/" className="flex items-center">
-            <img 
-              src="/logo.png" 
-              alt="Dominion Clothing Logo" 
-              className="h-12 w-auto object-contain max-h-16" 
+            <img
+              src="/logo.png"
+              alt="Dominion Clothing Logo"
+              className="h-16 w-auto object-contain max-h-20"
             />
           </Link>
         </div>
@@ -115,17 +115,17 @@ export default function Navbar() {
             value={searchVal}
             onChange={(e) => setSearchVal(e.target.value)}
             placeholder="Search products, brands..."
-            className="w-full bg-[#F4F2EC] text-ink placeholder-gray-400 text-xs border border-line rounded pl-10 pr-4 py-2.5 focus:outline-none focus:bg-white focus:border-navy transition-all"
+            className="w-full bg-[#FAFAF8] text-ink placeholder-gray-400 text-xs border border-line rounded pl-10 pr-4 py-2.5 focus:outline-none focus:bg-white focus:border-navy transition-all"
           />
         </form>
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-5 md:gap-6">
-          
+
           {/* Admin Console Link (desktop shortcut) */}
           {user && user.isAdmin && (
-            <Link 
-              to="/admin" 
+            <Link
+              to="/admin"
               className="hidden lg:flex items-center gap-1 bg-[#1B2A4A]/10 border border-[#1B2A4A]/25 text-navy font-extrabold text-[10px] uppercase px-3 py-1.5 rounded-sm tracking-wider hover:bg-navy hover:text-white transition-all shadow-sm"
             >
               Admin Panel
@@ -163,7 +163,7 @@ export default function Navbar() {
                   <Link
                     to="/admin"
                     onClick={() => setShowProfileDropdown(false)}
-                    className="block px-4 py-2 text-ink hover:bg-[#F4F2EC] hover:text-navy transition-colors uppercase tracking-wide lg:hidden font-bold"
+                    className="block px-4 py-2 text-ink hover:bg-[#FAFAF8] hover:text-navy transition-colors uppercase tracking-wide lg:hidden font-bold"
                   >
                     Admin Panel
                   </Link>
@@ -175,7 +175,7 @@ export default function Navbar() {
                     showToast("Signed out successfully.");
                     navigate("/");
                   }}
-                  className="w-full text-left px-4 py-2 text-crimson hover:bg-[#F4F2EC] transition-colors uppercase tracking-wide font-bold"
+                  className="w-full text-left px-4 py-2 text-crimson hover:bg-[#FAFAF8] transition-colors uppercase tracking-wide font-bold"
                 >
                   Logout
                 </button>
@@ -239,24 +239,24 @@ export default function Navbar() {
             className="fixed inset-0 bg-black/40 z-40 transition-opacity"
           />
           <div className="fixed top-0 left-0 h-full w-[80%] max-w-[280px] bg-white z-50 shadow-2xl mobile-menu-enter flex flex-col">
-            <div className="flex items-center justify-between h-20 px-5 border-b border-line bg-[#F4F2EC]/80">
-              <img 
-                src="/logo.png" 
-                alt="Logo" 
-                className="h-10 w-auto object-contain" 
+            <div className="flex items-center justify-between h-20 px-5 border-b border-line bg-[#FAFAF8]/80">
+              <img
+                src="/logo.png"
+                alt="Logo"
+                className="h-10 w-auto object-contain"
               />
-              <button 
-                onClick={() => setMenuOpen(false)} 
+              <button
+                onClick={() => setMenuOpen(false)}
                 className="text-ink hover:bg-paper transition-colors px-2.5 py-1 rounded text-lg leading-none"
               >
                 &times;
               </button>
             </div>
-            
-            <div className="px-5 py-4 bg-[#F4F2EC]/50 border-b border-line text-[10px] font-bold text-navy tracking-widest uppercase">
+
+            <div className="px-5 py-4 bg-[#FAFAF8]/50 border-b border-line text-[10px] font-bold text-navy tracking-widest uppercase">
               Shop Categories
             </div>
-            
+
             <nav className="flex-1 overflow-y-auto flex flex-col px-3 py-2 space-y-1">
               <Link
                 to="/products"
