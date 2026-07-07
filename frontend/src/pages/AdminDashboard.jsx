@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -454,7 +455,7 @@ export default function AdminDashboard() {
       )}
 
       {/* --- FORM MODAL FOR CREATE/EDIT PRODUCT --- */}
-      {showModal && (
+      {showModal && createPortal(
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-line rounded shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto page-enter">
             {/* Modal Header */}
@@ -657,7 +658,8 @@ export default function AdminDashboard() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </section>
