@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useToast } from "../context/ToastContext.jsx";
 
 export default function Navbar() {
   const { count, setIsOpen } = useCart();
+  const { user, logout } = useAuth();
+  const { showToast } = useToast();
+  
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [searchVal, setSearchVal] = useState("");
@@ -92,13 +98,66 @@ export default function Navbar() {
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-5 md:gap-6">
-          {/* Profile */}
-          <div className="hidden sm:flex flex-col items-center cursor-pointer text-ink hover:text-navy transition-colors">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="mb-1">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            <span className="text-[9px] font-bold tracking-wider uppercase">Profile</span>
+          
+          {/* Admin Console Link (desktop shortcut) */}
+          {user && user.isAdmin && (
+            <Link 
+              to="/admin" 
+              className="hidden lg:flex items-center gap-1 bg-[#1B2A4A]/10 border border-[#1B2A4A]/25 text-navy font-extrabold text-[10px] uppercase px-3 py-1.5 rounded-sm tracking-wider hover:bg-navy hover:text-white transition-all shadow-sm"
+            >
+              Admin Panel
+            </Link>
+          )}
+
+          {/* Profile / Account Dropdown */}
+          <div className="relative">
+            <div
+              onClick={() => {
+                if (user) {
+                  setShowProfileDropdown(!showProfileDropdown);
+                } else {
+                  navigate("/login");
+                }
+              }}
+              className="flex flex-col items-center cursor-pointer text-ink hover:text-navy transition-colors"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="mb-1">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span className="text-[9px] font-bold tracking-wider uppercase">
+                {user ? user.name.split(" ")[0] : "Profile"}
+              </span>
+            </div>
+
+            {/* Profile Dropdown Menu */}
+            {showProfileDropdown && user && (
+              <div className="absolute right-0 mt-3 w-48 bg-white border border-line rounded shadow-lg py-2 z-50 text-xs text-ink font-semibold">
+                <div className="px-4 py-2 border-b border-line font-bold text-gray-500 uppercase tracking-widest text-[9px]">
+                  Account: {user.name}
+                </div>
+                {user.isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setShowProfileDropdown(false)}
+                    className="block px-4 py-2 text-ink hover:bg-[#FAFAF8] hover:text-navy transition-colors uppercase tracking-wide lg:hidden font-bold"
+                  >
+                    Admin Panel
+                  </Link>
+                )}
+                <button
+                  onClick={() => {
+                    logout();
+                    setShowProfileDropdown(false);
+                    showToast("Signed out successfully.");
+                    navigate("/");
+                  }}
+                  className="w-full text-left px-4 py-2 text-crimson hover:bg-[#FAFAF8] transition-colors uppercase tracking-wide font-bold"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
 
           {/* New In */}
@@ -149,7 +208,7 @@ export default function Navbar() {
         </form>
       </div>
 
-      {/* Slide-out Drawer Navigation */}
+      {/* Slide-out Drawer Navigation (Mobile/Tablet) */}
       {menuOpen && (
         <>
           <div

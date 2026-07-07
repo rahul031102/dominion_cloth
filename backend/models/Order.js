@@ -21,6 +21,11 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
     paymentId: { type: String, default: "" },
+    status: {
+      type: String,
+      enum: ["Processing", "Dispatched", "Delivered"],
+      default: "Processing",
+    },
   },
   { timestamps: true }
 );
