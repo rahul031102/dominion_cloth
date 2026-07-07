@@ -11,6 +11,7 @@ export default function Navbar() {
   
   const [menuOpen, setMenuOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showShopDropdown, setShowShopDropdown] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [searchVal, setSearchVal] = useState("");
@@ -66,17 +67,39 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Center-Left: Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-5 h-full">
-          {navLinks.map((l) => (
-            <Link
-              key={l.label}
-              to={l.to}
-              className="font-bold text-[12px] uppercase tracking-widest text-gray-700 hover:text-navy transition-colors border-b-2 border-transparent hover:border-navy h-full flex items-center px-1"
-            >
-              {l.label}
-            </Link>
-          ))}
+        {/* Center-Left: Shop Dropdown + quick links */}
+        <nav className="hidden lg:flex items-center gap-6 h-full">
+          <div
+            className="relative h-full"
+            onMouseEnter={() => setShowShopDropdown(true)}
+            onMouseLeave={() => setShowShopDropdown(false)}
+          >
+            <button className="font-bold text-[12px] uppercase tracking-widest text-gray-700 hover:text-navy transition-colors h-full flex items-center gap-1 px-1">
+              Shop
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            {showShopDropdown && (
+              <div className="absolute top-full left-0 bg-white border border-line rounded shadow-lg py-2 w-48 grid grid-cols-1 z-50">
+                {navLinks.map((l) => (
+                  <Link
+                    key={l.label}
+                    to={l.to}
+                    className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 hover:bg-paper hover:text-navy transition-colors"
+                  >
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+          <Link to="/products?cat=New" className="font-bold text-[12px] uppercase tracking-widest text-gray-700 hover:text-navy transition-colors h-full flex items-center px-1">
+            New In
+          </Link>
+          <Link to="/products?cat=Sale" className="font-bold text-[12px] uppercase tracking-widest text-crimson hover:text-navy transition-colors h-full flex items-center px-1">
+            Sale
+          </Link>
         </nav>
 
         {/* Center-Right: Search Input Box */}
