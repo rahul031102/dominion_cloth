@@ -96,8 +96,10 @@ api.interceptors.response.use(
 );
 
 // Product Endpoints
-export const fetchProducts = (category) =>
-  api.get("/products", { params: category ? { category } : {} }).then((r) => r.data);
+export const fetchProducts = (params = {}) => {
+  const queryParams = typeof params === "string" ? { category: params } : params;
+  return api.get("/products", { params: queryParams }).then((r) => r.data);
+};
 
 export const fetchProductById = (id) => api.get(`/products/${id}`).then((r) => r.data);
 

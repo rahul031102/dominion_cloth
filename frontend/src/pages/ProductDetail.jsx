@@ -3,16 +3,24 @@ import { useParams, Link } from "react-router-dom";
 import { fetchProductById, fetchProducts } from "../api/products.js";
 import { useCart } from "../context/CartContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
+import { useWishlist } from "../context/WishlistContext.jsx";
 import ProductCard from "../components/ProductCard.jsx";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const { addToCart } = useCart();
   const { showToast } = useToast();
+  const { toggleWishlist, inWishlist } = useWishlist();
+
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
-  const [selectedSize, setSelectedSize] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Variant & Image States
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [activeImage, setActiveImage] = useState("");
+  const [zoomStyle, setZoomStyle] = useState({ display: "none" });
 
   useEffect(() => {
     setLoading(true);
@@ -24,10 +32,13 @@ export default function ProductDetail() {
           return;
         }
         setProduct(p);
+        setSelectedColor(p.colors?.[0] || null);
         setSelectedSize(p.sizes?.[0] || null);
+        setActiveImage(p.image);
         setLoading(false);
+
         fetchProducts(p.category)
-          .then((all) => setRelated(all.filter((x) => x._id !== p._id).slice(0, 4)))
+          .then((all) => setRelated(all.products ? all.products.filter((x) => x._id !== p._id).slice(0, 4) : []))
           .catch(() => setRelated([]));
       })
       .catch(() => {
@@ -37,8 +48,48 @@ export default function ProductDetail() {
   }, [id]);
 
   const handleAdd = () => {
-    addToCart(product, selectedSize);
+    if (!selectedSize || !selectedColor) {
+      showToast("Please choose a size and color first.");
+      return;
+    }
+
+    const matchedVariant = product.variants?.find(
+      (v) => v.size === selectedSize && v.color === selectedColor
+    );
+    const stockCount = matchedVariant ? matchedVariant.stock : 0;
+    if (stockCount === 0) {
+      showToast("Selected option combo is Out of Stock!");
+      return;
+    }
+
+    addToCart(product, selectedSize, selectedColor);
     showToast(`Added "${product.name}" to your bag`);
+  };
+
+  const handleWishlistToggle = async () => {
+    const success = await toggleWishlist(product._id);
+    if (!success) {
+      showToast("Please sign in to add items to your wishlist.");
+    } else {
+      showToast(inWishlist(product._id) ? "Removed from wishlist" : "Added to wishlist");
+    }
+  };
+
+  // Image Hover Zoom Handler
+  const handleMouseMove = (e) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setZoomStyle({
+      display: "block",
+      backgroundImage: `url(${activeImage})`,
+      backgroundPosition: `${x}% ${y}%`,
+      backgroundSize: "220%",
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setZoomStyle({ display: "none" });
   };
 
   if (loading) {
@@ -79,9 +130,18 @@ export default function ProductDetail() {
   const discount =
     product.mrp > product.price ? Math.round((1 - product.price / product.mrp) * 100) : 0;
 
+  // Check matched variant stock
+  const activeVariant = product.variants?.find(
+    (v) => v.size === selectedSize && v.color === selectedColor
+  );
+  const variantStock = activeVariant ? activeVariant.stock : 0;
+  const isOutOfStock = variantStock === 0;
+
+  const wished = inWishlist(product._id);
+
   return (
     <section className="max-w-7xl mx-auto px-4 md:px-8 pt-8 pb-28 md:pb-20 page-enter bg-paper text-ink font-body">
-      {/* Breadcrumb navigation */}
+      {/* Breadcrumbs */}
       <div className="text-xs text-gray-400 mb-6 flex items-center gap-1.5 font-semibold">
         <Link to="/" className="hover:text-navy">Home</Link>
         <span>/</span>
@@ -92,19 +152,48 @@ export default function ProductDetail() {
         <span className="text-ink font-bold truncate max-w-[200px]">{product.name}</span>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-10 md:gap-16">
-        {/* Left Column: Product Image */}
-        <div className="rounded border border-line overflow-hidden bg-white aspect-[3/4] md:sticky md:top-28 h-max shadow-sm">
-          <img
-            src={product.image}
-            alt={product.name}
-            onLoad={(e) => e.currentTarget.classList.add("img-fade")}
-            className="w-full h-full object-cover"
-          />
+      <div className="grid md:grid-cols-12 gap-8 md:gap-12">
+        {/* Left Column: Image Gallery Thumbnails */}
+        <div className="md:col-span-1 flex md:flex-col gap-2 order-2 md:order-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0">
+          {(product.images || [product.image]).map((img, idx) => {
+            const isSelected = img === activeImage;
+            return (
+              <button
+                key={idx}
+                onClick={() => setActiveImage(img)}
+                onMouseEnter={() => setActiveImage(img)}
+                className={`w-14 h-18 md:w-full aspect-[3/4] border rounded overflow-hidden shrink-0 transition-all ${
+                  isSelected ? "border-navy opacity-100" : "border-line opacity-60 hover:opacity-100"
+                }`}
+              >
+                <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+              </button>
+            );
+          })}
         </div>
 
-        {/* Right Column: Product Info details */}
-        <div className="md:sticky md:top-28 h-max">
+        {/* Center Column: Zoomable Main Image Display */}
+        <div className="md:col-span-6 order-1 md:order-2">
+          <div
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="rounded border border-line overflow-hidden bg-white aspect-[3/4] shadow-sm relative cursor-zoom-in group select-none"
+          >
+            <img
+              src={activeImage}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-200"
+            />
+            {/* Zoom Overlay panel */}
+            <div
+              style={zoomStyle}
+              className="absolute inset-0 bg-no-repeat pointer-events-none border border-line bg-white"
+            />
+          </div>
+        </div>
+
+        {/* Right Column: Variant & Detail Specs */}
+        <div className="md:col-span-5 order-3 h-max">
           <h1 className="font-extrabold text-xl md:text-2xl text-ink tracking-wide uppercase">
             {product.brand}
           </h1>
@@ -114,10 +203,10 @@ export default function ProductDetail() {
 
           {/* Rating Badge */}
           <div className="inline-flex items-center gap-1.5 border border-line bg-white rounded px-2.5 py-1 text-xs font-bold text-navy mb-5 cursor-pointer">
-            <span>4.3</span>
+            <span>{product.rating || "4.2"}</span>
             <span className="text-navy text-xs">★</span>
             <span className="text-line">|</span>
-            <span className="text-gray-500 font-normal">842 Ratings</span>
+            <span className="text-gray-500 font-normal">{product.numReviews || "14"} Ratings</span>
           </div>
 
           <hr className="border-line mb-4" />
@@ -144,7 +233,7 @@ export default function ProductDetail() {
             </p>
           </div>
 
-          {/* Product Description */}
+          {/* Description */}
           <div className="mb-6 bg-white border border-line p-4 rounded text-xs">
             <h4 className="text-xs font-bold uppercase tracking-wider mb-1.5 text-navy">Product Description</h4>
             <p className="text-gray-600 leading-relaxed font-sans text-xs">
@@ -152,24 +241,45 @@ export default function ProductDetail() {
             </p>
           </div>
 
+          {/* Colors Selection */}
           {product.colors?.length > 0 && (
             <div className="mb-5">
               <p className="text-xs font-bold uppercase tracking-wider mb-2 text-gray-500">Select Color</p>
               <div className="flex gap-2.5">
-                {product.colors.map((c, i) => (
-                  <button
-                    key={i}
-                    className="w-8 h-8 rounded-full border border-line hover:scale-110 active:scale-95 transition-all shadow-sm"
-                    style={{ background: c }}
-                    aria-label={`Color dot ${c}`}
-                  />
-                ))}
+                {product.colors.map((c, i) => {
+                  const isSelected = selectedColor === c;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedColor(c)}
+                      className={`w-8 h-8 rounded-full border relative transition-all shadow-sm ${
+                        isSelected ? "scale-110 border-navy border-2 shadow-md" : "border-line hover:scale-105"
+                      }`}
+                      style={{ background: c }}
+                      aria-label={`Color dot ${c}`}
+                    >
+                      {isSelected && (
+                        <span
+                          className="absolute text-[8px] font-bold"
+                          style={{
+                            color: c === "#FFFFFF" ? "#000" : "#FFF",
+                            left: "50%",
+                            top: "50%",
+                            transform: "translate(-50%, -50%)",
+                          }}
+                        >
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* Sizes */}
-          <div className="mb-8">
+          {/* Sizes Selection */}
+          <div className="mb-6">
             <p className="text-xs font-bold uppercase tracking-wider mb-2.5 text-gray-500">Select Size</p>
             <div className="flex gap-3 flex-wrap">
               {(product.sizes || []).map((s) => {
@@ -191,11 +301,25 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* Buttons row */}
+          {/* Stock Availability status */}
+          <div className="mb-6">
+            {isOutOfStock ? (
+              <span className="text-xs font-bold text-crimson uppercase tracking-widest px-2.5 py-1 bg-crimson/5 border border-crimson/20 rounded">
+                Out Of Stock
+              </span>
+            ) : (
+              <span className="text-xs font-bold text-green-700 uppercase tracking-widest px-2.5 py-1 bg-green-50 border border-green-200 rounded">
+                In Stock ({variantStock} items remaining)
+              </span>
+            )}
+          </div>
+
+          {/* Action Buttons */}
           <div className="hidden md:flex gap-4 mb-3">
             <button
               onClick={handleAdd}
-              className="flex-1 py-3.5 text-xs uppercase tracking-wider font-extrabold bg-navy text-white hover:opacity-90 active:scale-95 transition-all rounded shadow-md flex items-center justify-center gap-2"
+              disabled={isOutOfStock}
+              className="flex-1 py-3.5 text-xs uppercase tracking-wider font-extrabold bg-navy text-white hover:opacity-90 active:scale-95 transition-all rounded shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
@@ -204,17 +328,30 @@ export default function ProductDetail() {
               </svg>
               Add to Bag
             </button>
-            <Link
-              to="/products"
-              className="flex-1 py-3.5 text-xs uppercase tracking-wider font-extrabold border border-line text-ink bg-white hover:border-navy hover:text-navy rounded transition-colors flex items-center justify-center gap-2"
+
+            <button
+              onClick={handleWishlistToggle}
+              className={`flex-1 py-3.5 text-xs uppercase tracking-wider font-extrabold border rounded transition-all flex items-center justify-center gap-2 ${
+                wished
+                  ? "bg-crimson/5 text-crimson border-crimson/35"
+                  : "border-line text-ink bg-white hover:border-navy hover:text-navy"
+              }`}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill={wished ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
-              Wishlist
-            </Link>
+              {wished ? "Wishlisted" : "Wishlist"}
+            </button>
           </div>
-          <p className="hidden md:block text-[11px] text-gray-500 text-center font-semibold">
+
+          <p className="hidden md:block text-[11px] text-gray-500 text-center font-semibold mt-4">
             Easy 14 days returns · Free delivery on orders above ₹2,999
           </p>
         </div>
@@ -234,15 +371,16 @@ export default function ProductDetail() {
         </div>
       )}
 
-      {/* Sticky mobile add-to-bag bar */}
+      {/* Sticky Mobile Add to Bag Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-line px-4 py-3 flex items-center justify-between shadow-2xl gap-3">
         <div className="shrink-0 pl-1 font-mono">
           <p className="text-xs font-bold text-ink">₹{product.price.toLocaleString("en-IN")}</p>
-          <p className="text-[10px] text-navy font-bold uppercase">Size: {selectedSize || "N/A"}</p>
+          <p className="text-[10px] text-navy font-bold uppercase">Stock: {variantStock}</p>
         </div>
         <button
           onClick={handleAdd}
-          className="flex-1 py-3 text-xs uppercase tracking-wider font-extrabold bg-navy text-white rounded active:scale-95 shadow-md flex items-center justify-center gap-1.5"
+          disabled={isOutOfStock}
+          className="flex-1 py-3 text-xs uppercase tracking-wider font-extrabold bg-navy text-white rounded active:scale-95 shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
