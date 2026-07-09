@@ -10,6 +10,7 @@ import Checkout from "./pages/Checkout.jsx";
 import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
+import MyOrders from "./pages/MyOrders.jsx";
 
 export default function App() {
   const [appLoading, setAppLoading] = useState(true);
@@ -57,6 +58,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/orders" element={<MyOrders />} />
         </Routes>
       </main>
       <Footer />

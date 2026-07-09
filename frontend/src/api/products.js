@@ -29,6 +29,12 @@ export const fetchProductById = (id) => api.get(`/products/${id}`).then((r) => r
 // Order Placement
 export const placeOrder = (orderData) => api.post("/orders", orderData).then((r) => r.data);
 
+export const verifyPayment = (verificationData) =>
+  api.post("/orders/verify", verificationData).then((r) => r.data);
+
+export const fetchMyOrders = () =>
+  api.get("/orders/mine").then((r) => r.data);
+
 // Auth Endpoints
 export const loginUser = (email, password) =>
   api.post("/users/login", { email, password }).then((r) => r.data);

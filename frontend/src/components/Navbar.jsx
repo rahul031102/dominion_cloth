@@ -168,6 +168,13 @@ export default function Navbar() {
                   <div className="px-4 py-2 border-b border-line font-bold text-gray-500 uppercase tracking-widest text-[9px]">
                     Account: {user.name}
                   </div>
+                  <Link
+                    to="/orders"
+                    onClick={() => setShowProfileDropdown(false)}
+                    className="block px-4 py-2 text-ink hover:bg-[#FAFAF8] hover:text-navy transition-colors uppercase tracking-wide font-bold"
+                  >
+                    My Orders
+                  </Link>
                   {user.isAdmin && (
                     <Link
                       to="/admin"
@@ -297,9 +304,29 @@ export default function Navbar() {
               ))}
             </nav>
 
-            <div className="border-t border-line px-5 py-4 bg-[#F4F2EC]/50">
+            <div className="border-t border-line px-5 py-4 bg-[#F4F2EC]/50 flex flex-col gap-2">
               {user ? (
-                <div className="text-xs font-bold text-navy uppercase">Hi, {user.name.split(" ")[0]}</div>
+                <>
+                  <div className="text-xs font-bold text-navy uppercase mb-1">Hi, {user.name.split(" ")[0]}</div>
+                  <Link
+                    to="/orders"
+                    onClick={() => setMenuOpen(false)}
+                    className="text-[10px] text-gray-700 font-extrabold uppercase tracking-wider hover:text-navy transition-colors py-1"
+                  >
+                    My Orders
+                  </Link>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMenuOpen(false);
+                      showToast("Signed out successfully.");
+                      navigate("/");
+                    }}
+                    className="text-left text-[10px] text-crimson font-extrabold uppercase tracking-wider transition-colors py-1"
+                  >
+                    Logout
+                  </button>
+                </>
               ) : (
                 <Link to="/login" onClick={() => setMenuOpen(false)} className="flex items-center justify-center bg-navy text-white text-[10px] font-extrabold uppercase tracking-wider py-2.5 rounded-sm">
                   Login / Sign Up

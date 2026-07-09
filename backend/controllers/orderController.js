@@ -1,13 +1,30 @@
 import Order from "../models/Order.js";
+import Razorpay from "razorpay";
+import crypto from "crypto";
 
-// Demo checkout: creates the order record as "pending".
+// Initialize Razorpay SDK if environment variables are set
+let razorpayInstance = null;
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  razorpayInstance = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+  console.log("Razorpay initialized successfully.");
+} else {
+  console.log("Razorpay credentials missing. Running checkout in Simulation Mode.");
+}
+
+// Create order record and generate Razorpay session
 export const placeOrder = async (req, res) => {
   try {
     const { customerName, phone, address, items, subtotal } = req.body;
     if (!items || items.length === 0) {
       return res.status(400).json({ message: "Cart is empty" });
     }
+
+    // Create the order locally as "pending"
     const order = await Order.create({
+      user: req.user ? req.user._id : null,
       customerName,
       phone,
       address,
@@ -15,9 +32,99 @@ export const placeOrder = async (req, res) => {
       subtotal,
       paymentStatus: "pending",
     });
-    res.status(201).json(order);
+
+    if (razorpayInstance) {
+      const options = {
+        amount: Math.round(subtotal * 100), // amount in paise
+        currency: "INR",
+        receipt: `receipt_order_${order._id}`,
+      };
+
+      try {
+        const razorpayOrder = await razorpayInstance.orders.create(options);
+        order.razorpayOrderId = razorpayOrder.id;
+        await order.save();
+
+        return res.status(201).json({
+          order,
+          razorpayOrder,
+          isMock: false,
+          razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+        });
+      } catch (rzErr) {
+        console.error("Razorpay order creation failed, falling back to mock:", rzErr);
+        order.razorpayOrderId = `mock_order_${order._id}`;
+        await order.save();
+        return res.status(201).json({
+          order,
+          isMock: true,
+          message: "Razorpay API error. Fell back to simulator mode.",
+        });
+      }
+    } else {
+      // Simulation Mode
+      order.razorpayOrderId = `mock_order_${order._id}`;
+      await order.save();
+      return res.status(201).json({
+        order,
+        isMock: true,
+      });
+    }
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+};
+
+// Verify payment signature
+export const verifyPayment = async (req, res) => {
+  try {
+    const { orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature, isMock } = req.body;
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (isMock || !razorpayInstance) {
+      // Simulator mode verification
+      order.paymentStatus = "paid";
+      order.paymentId = razorpayPaymentId || `mock_pay_${Date.now()}`;
+      order.razorpayOrderId = razorpayOrderId || order.razorpayOrderId;
+      order.razorpayPaymentId = razorpayPaymentId || `mock_pay_${Date.now()}`;
+      await order.save();
+      return res.json({ message: "Payment verified (Simulation Mode)", order });
+    }
+
+    // Real HMAC verification
+    const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+    hmac.update(razorpayOrderId + "|" + razorpayPaymentId);
+    const generatedSignature = hmac.digest("hex");
+
+    if (generatedSignature === razorpaySignature) {
+      order.paymentStatus = "paid";
+      order.paymentId = razorpayPaymentId;
+      order.razorpayOrderId = razorpayOrderId;
+      order.razorpayPaymentId = razorpayPaymentId;
+      order.razorpaySignature = razorpaySignature;
+      await order.save();
+      res.json({ message: "Payment verified successfully", order });
+    } else {
+      order.paymentStatus = "failed";
+      await order.save();
+      res.status(400).json({ message: "Invalid payment signature" });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Logged-in user's orders
+export const getMyOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 

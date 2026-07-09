@@ -1,22 +1,65 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
-import { placeOrder } from "../api/products.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useToast } from "../context/ToastContext.jsx";
+import { placeOrder, verifyPayment } from "../api/products.js";
 
 export default function Checkout() {
   const { cart, subtotal, clearCart } = useCart();
+  const { user, loading: authLoading } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
+
   const [form, setForm] = useState({ customerName: "", phone: "", address: "" });
   const [placing, setPlacing] = useState(false);
   const [done, setDone] = useState(false);
 
+  // Simulation state
+  const [showSimulator, setShowSimulator] = useState(false);
+  const [simulating, setSimulating] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState(null);
+
+  // Authenticate user before checkout
+  useEffect(() => {
+    if (!authLoading && !user) {
+      showToast("Please sign in to proceed with checkout.");
+      navigate("/login?redirect=/checkout");
+    }
+  }, [user, authLoading, navigate]);
+
+  // Autofill name from profile
+  useEffect(() => {
+    if (user) {
+      setForm((f) => ({
+        ...f,
+        customerName: f.customerName || user.name || "",
+      }));
+    }
+  }, [user]);
+
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  // Load Razorpay script helper
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
     setPlacing(true);
     try {
-      await placeOrder({
+      const orderPayload = {
         ...form,
         items: cart.map((c) => ({
           product: c.product._id,
@@ -26,15 +69,109 @@ export default function Checkout() {
           size: c.size,
         })),
         subtotal,
-      });
-      clearCart();
-      setDone(true);
+      };
+
+      // Create order locally + create Razorpay order on backend
+      const response = await placeOrder(orderPayload);
+      const localOrder = response.order;
+
+      if (response.isMock) {
+        // Fallback to custom sandbox simulation
+        setCurrentOrderId(localOrder._id);
+        setShowSimulator(true);
+      } else {
+        // Real Razorpay modal execution
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+          showToast("Failed to load payment gateway script. Using simulation fallback.");
+          setCurrentOrderId(localOrder._id);
+          setShowSimulator(true);
+          return;
+        }
+
+        const options = {
+          key: response.razorpayKeyId,
+          amount: response.razorpayOrder.amount,
+          currency: response.razorpayOrder.currency,
+          name: "Dominion Clothing",
+          description: "Manifest Purchase",
+          image: "/logo.png",
+          order_id: response.razorpayOrder.id,
+          handler: async function (razorpayRes) {
+            setPlacing(true);
+            try {
+              await verifyPayment({
+                orderId: localOrder._id,
+                razorpayOrderId: razorpayRes.razorpay_order_id,
+                razorpayPaymentId: razorpayRes.razorpay_payment_id,
+                razorpaySignature: razorpayRes.razorpay_signature,
+                isMock: false,
+              });
+              clearCart();
+              setDone(true);
+              showToast("Payment verified! Order placed.");
+            } catch (err) {
+              showToast("Payment verification failed. Please contact support.");
+            } finally {
+              setPlacing(false);
+            }
+          },
+          prefill: {
+            name: form.customerName,
+            contact: form.phone,
+            email: user?.email || "",
+          },
+          theme: {
+            color: "#1B2A4A",
+          },
+          modal: {
+            ondismiss: function () {
+              showToast("Payment window closed.");
+            }
+          }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      }
     } catch (err) {
-      alert("Something went wrong placing the order. Check that the backend server is running.");
+      console.error(err);
+      showToast(err.response?.data?.message || "Something went wrong placing the order.");
     } finally {
       setPlacing(false);
     }
   };
+
+  const handleSimulateSuccess = async () => {
+    setSimulating(true);
+    try {
+      const mockPayId = "mock_pay_" + Math.random().toString(36).substring(2, 9).toUpperCase();
+      await verifyPayment({
+        orderId: currentOrderId,
+        razorpayOrderId: `mock_order_${currentOrderId}`,
+        razorpayPaymentId: mockPayId,
+        isMock: true,
+      });
+      clearCart();
+      setShowSimulator(false);
+      setDone(true);
+      showToast("Order simulated successfully!");
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to verify simulated payment.");
+    } finally {
+      setSimulating(false);
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-20 text-center text-gray-500 bg-paper">
+        <div className="skeleton h-12 w-48 mx-auto rounded mb-8" />
+        <div className="skeleton h-48 w-full rounded" />
+      </div>
+    );
+  }
 
   if (done) {
     return (
@@ -49,10 +186,10 @@ export default function Checkout() {
           Thank you, <strong className="text-navy">{form.customerName}</strong>. Your order is confirmed and queued for fulfillment.
         </p>
         <button
-          onClick={() => navigate("/products")}
+          onClick={() => navigate("/orders")}
           className="w-full py-3.5 text-xs font-bold uppercase tracking-wider bg-navy text-white rounded hover:opacity-90 transition-all"
         >
-          Continue Shopping
+          View Your Orders
         </button>
       </section>
     );
@@ -77,7 +214,7 @@ export default function Checkout() {
   }
 
   return (
-    <section className="max-w-5xl mx-auto px-4 md:px-8 py-10 grid md:grid-cols-2 gap-10 bg-paper text-ink font-body">
+    <section className="max-w-5xl mx-auto px-4 md:px-8 py-10 grid md:grid-cols-2 gap-10 bg-paper text-ink font-body relative">
       
       {/* Left Column: Address Form */}
       <div className="border border-line bg-white p-6 md:p-8 rounded shadow-sm">
@@ -134,7 +271,7 @@ export default function Checkout() {
               </label>
             </div>
             <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-wide">
-              *Simulation Mode: Orders are registered without charging cards.
+              *Simulation Mode will automatically trigger if Razorpay keys are not set.
             </p>
           </div>
 
@@ -204,6 +341,60 @@ export default function Checkout() {
         </div>
       </div>
 
+      {/* Premium Sandbox Simulator Modal */}
+      {showSimulator && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-line rounded-lg shadow-2xl max-w-sm w-full p-6 animate-scale-up text-ink font-body">
+            <div className="flex items-center gap-2 mb-4 text-navy border-b border-line pb-3">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <line x1="2" y1="10" x2="22" y2="10" />
+              </svg>
+              <h3 className="font-extrabold text-sm uppercase tracking-wider">Gateway Sandbox</h3>
+            </div>
+            
+            <p className="text-xs text-gray-500 mb-6 font-medium leading-relaxed uppercase">
+              No active payment keys detected. You are using the secure checkout simulation.
+            </p>
+
+            {/* Credit Card Graphic */}
+            <div className="bg-gradient-to-tr from-navy to-[#2c3e66] text-white rounded-xl p-5 shadow-lg mb-6 relative overflow-hidden font-mono">
+              <div className="absolute right-4 top-4 text-white/20 uppercase tracking-widest text-[9px] font-extrabold">SANDBOX CARD</div>
+              <div className="text-[10px] text-white/60 uppercase tracking-wider mb-4">Dominion Card</div>
+              <div className="text-base tracking-widest mb-5">4111 2222 3333 4444</div>
+              <div className="flex justify-between items-center text-xs">
+                <div>
+                  <span className="text-[7px] text-white/50 block leading-none">VALID THRU</span>
+                  <span>12/30</span>
+                </div>
+                <div>
+                  <span className="text-[7px] text-white/50 block leading-none">CVV</span>
+                  <span>•••</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleSimulateSuccess}
+                disabled={simulating}
+                className="w-full py-3.5 text-xs font-bold uppercase tracking-wider bg-navy text-white rounded hover:opacity-90 active:scale-95 transition-all shadow-md flex items-center justify-center gap-2"
+              >
+                {simulating ? "PROCESSING SIMULATION..." : "Simulate Successful Payment"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowSimulator(false);
+                  showToast("Payment simulation cancelled.");
+                }}
+                className="w-full py-2.5 text-xs font-bold uppercase tracking-wider border border-line text-gray-600 rounded hover:bg-paper transition-all text-center"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

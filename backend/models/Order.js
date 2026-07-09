@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     customerName: { type: String, required: true },
     phone: { type: String, required: true },
     address: { type: String, required: true },
@@ -21,6 +22,9 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
     paymentId: { type: String, default: "" },
+    razorpayOrderId: { type: String, default: "" },
+    razorpayPaymentId: { type: String, default: "" },
+    razorpaySignature: { type: String, default: "" },
     status: {
       type: String,
       enum: ["Processing", "Dispatched", "Delivered"],
