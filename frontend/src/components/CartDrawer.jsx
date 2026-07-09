@@ -71,7 +71,7 @@ export default function CartDrawer() {
                         <p className="text-[11px] text-navy font-bold mt-1 uppercase tracking-wider">Size: {c.size}</p>
                       </div>
                       <button
-                        onClick={() => removeFromCart(c.product._id, c.size)}
+                        onClick={() => removeFromCart(c.product._id, c.size, c.color || "")}
                         className="text-gray-400 hover:text-navy text-lg leading-none p-1 transition-colors"
                         aria-label="Remove item"
                       >
@@ -88,14 +88,14 @@ export default function CartDrawer() {
                     {/* Qty selectors */}
                     <div className="flex items-center gap-2 border border-line rounded px-2 py-1 bg-paper">
                       <button
-                        onClick={() => changeQty(c.product._id, c.size, -1)}
+                        onClick={() => changeQty(c.product._id, c.size, c.color || "", -1)}
                         className="w-5 h-5 flex items-center justify-center text-xs font-bold text-ink hover:text-navy rounded active:scale-95 transition-all"
                       >
                         -
                       </button>
                       <span className="text-xs font-bold text-ink px-1">{c.qty}</span>
                       <button
-                        onClick={() => changeQty(c.product._id, c.size, 1)}
+                        onClick={() => changeQty(c.product._id, c.size, c.color || "", 1)}
                         className="w-5 h-5 flex items-center justify-center text-xs font-bold text-ink hover:text-navy rounded active:scale-95 transition-all"
                       >
                         +

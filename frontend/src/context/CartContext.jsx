@@ -117,7 +117,10 @@ export const CartProvider = ({ children }) => {
     });
   };
 
-  const changeQty = (productId, size, color = "", delta) => {
+  const changeQty = (productId, size, colorOrDelta = "", maybeDelta) => {
+    const color = typeof colorOrDelta === "string" ? colorOrDelta : "";
+    const delta = typeof colorOrDelta === "number" ? colorOrDelta : maybeDelta;
+
     setCart((prev) => {
       const nextCart = prev
         .map((c) =>
