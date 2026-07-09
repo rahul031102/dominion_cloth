@@ -8,7 +8,7 @@ const generateAccessToken = (id) => {
 };
 
 const generateRefreshToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET || "refresh_secret_key_888", { expiresIn: "7d" });
+  return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 };
 
 const sendCookieToken = (res, refreshToken) => {
@@ -257,7 +257,9 @@ export const resetPassword = async (req, res) => {
 // Get profile details
 export const getUserProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("-password");
+    const user = await User.findById(req.user._id).select(
+      "-password -verificationToken -verificationTokenExpires -resetPasswordToken -resetPasswordExpires"
+    );
     if (!user) return res.status(404).json({ message: "User not found" });
     return res.json(user);
   } catch (error) {

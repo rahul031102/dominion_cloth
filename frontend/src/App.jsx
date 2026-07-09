@@ -16,6 +16,7 @@ import VerifyEmail from "./pages/VerifyEmail.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import Wishlist from "./pages/Wishlist.jsx";
+import NotFound from "./pages/NotFound.jsx";
 
 export default function App() {
   const [appLoading, setAppLoading] = useState(true);
@@ -69,6 +70,7 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />

@@ -71,3 +71,25 @@ export const addressSchema = z.object({
     isDefault: z.boolean().optional(),
   }),
 });
+
+export const productAdminSchema = z.object({
+  body: z.object({
+    name: z.string().min(1, "Product name is required"),
+    brand: z.string().min(1, "Brand is required"),
+    category: z.enum(["Shirts", "Polos", "T-Shirts", "Trousers", "Jeans", "Jackets", "Sweatshirts", "Shorts"], {
+      errorMap: () => ({ message: "Invalid category selection" })
+    }),
+    price: z.number().positive("Price must be a positive number"),
+    mrp: z.number().positive("MRP must be a positive number"),
+    tag: z.enum(["New", "Sale", ""]).optional(),
+    image: z.string().url("Main product image must be a valid URL"),
+    description: z.string().min(1, "Description is required"),
+    variants: z.array(
+      z.object({
+        size: z.string().min(1, "Size is required"),
+        color: z.string().min(1, "Color is required"),
+        stock: z.number().int().nonnegative("Stock count cannot be negative"),
+      })
+    ).min(1, "At least one size/color variant combination must be defined"),
+  }),
+});

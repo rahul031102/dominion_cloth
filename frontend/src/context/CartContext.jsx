@@ -8,38 +8,80 @@ export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
   const { user } = useAuth();
-  const [cart, setCart] = useState([]); // { product, qty, size, color }
+  const [cart, setCart] = useState(() => {
+    try {
+      const guestCart = localStorage.getItem("guestCart");
+      return guestCart ? JSON.parse(guestCart) : [];
+    } catch (err) {
+      return [];
+    }
+  });
   const [isOpen, setIsOpen] = useState(false);
+
+  // Sync guest cart changes to localStorage (runs only for unauthenticated guest sessions)
+  useEffect(() => {
+    if (!user) {
+      localStorage.setItem("guestCart", JSON.stringify(cart));
+    } else {
+      localStorage.removeItem("guestCart");
+    }
+  }, [cart, user]);
 
   // Sync DB cart on login / logout
   useEffect(() => {
     if (user) {
       fetchCart()
         .then((dbCart) => {
-          if (dbCart && dbCart.length > 0) {
-            const loadedCart = dbCart.map((item) => ({
-              product: item.product,
-              size: item.size,
-              qty: item.qty,
-              color: item.color || "",
-            }));
-            setCart(loadedCart);
-          } else if (cart.length > 0) {
-            // Guest items exist, upload them
+          const parsedDbCart = (dbCart || []).map((item) => ({
+            product: item.product,
+            size: item.size,
+            qty: item.qty,
+            color: item.color || "",
+          }));
+
+          // Merge guest cart items into DB cart if any exist
+          if (cart.length > 0) {
+            const merged = [...parsedDbCart];
+            
+            cart.forEach((guestItem) => {
+              const match = merged.find(
+                (dbItem) =>
+                  dbItem.product._id === guestItem.product._id &&
+                  dbItem.size === guestItem.size &&
+                  dbItem.color === guestItem.color
+              );
+              if (match) {
+                match.qty += guestItem.qty;
+              } else {
+                merged.push(guestItem);
+              }
+            });
+
+            setCart(merged);
             syncCartApi(
-              cart.map((item) => ({
+              merged.map((item) => ({
                 product: item.product._id,
                 size: item.size,
                 qty: item.qty,
                 color: item.color || "",
               }))
             ).catch(console.error);
+          } else {
+            // No guest items to merge, just load the DB cart
+            setCart(parsedDbCart);
           }
         })
         .catch(console.error);
     } else {
-      setCart([]);
+      // Load guest cart from localStorage when logging out
+      try {
+        const guestCart = localStorage.getItem("guestCart");
+        setCart(guestCart ? JSON.parse(guestCart) : []);
+      } catch (err) {
+        setCart([]);
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const syncWithDB = (updatedCart) => {
@@ -103,6 +145,8 @@ export const CartProvider = ({ children }) => {
     setCart([]);
     if (user) {
       syncCartApi([]).catch(console.error);
+    } else {
+      localStorage.removeItem("guestCart");
     }
   };
 
