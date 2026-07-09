@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
-import { fetchMyOrders, cancelOrderApi } from "../api/products.js";
+import { fetchMyOrders, cancelOrderApi, returnOrderApi } from "../api/products.js";
 
 const STEPS = ["Processing", "Confirmed", "Shipped", "Out for Delivery", "Delivered"];
 
@@ -47,6 +47,22 @@ export default function MyOrders() {
         loadOrders();
       } catch (err) {
         showToast(err.response?.data?.message || "Failed to cancel order.");
+      }
+    }
+  };
+
+  const handleReturnOrder = async (orderId) => {
+    if (
+      window.confirm(
+        "Are you sure you want to return this order? This will restore item stock levels and issue a refund request."
+      )
+    ) {
+      try {
+        await returnOrderApi(orderId);
+        showToast("Return request submitted successfully.");
+        loadOrders();
+      } catch (err) {
+        showToast(err.response?.data?.message || "Failed to submit return request.");
       }
     }
   };
@@ -161,6 +177,16 @@ export default function MyOrders() {
                       className="px-3.5 py-1.5 border border-crimson/30 hover:border-crimson text-crimson bg-white hover:bg-crimson/5 text-[10px] font-extrabold uppercase tracking-widest rounded transition-all active:scale-95"
                     >
                       Cancel Order
+                    </button>
+                  )}
+
+                  {/* Customer Return button */}
+                  {o.status === "Delivered" && (
+                    <button
+                      onClick={() => handleReturnOrder(o._id)}
+                      className="px-3.5 py-1.5 border border-gray-400 hover:border-navy text-gray-700 hover:text-navy bg-white hover:bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest rounded transition-all active:scale-95"
+                    >
+                      Return Order
                     </button>
                   )}
                 </div>

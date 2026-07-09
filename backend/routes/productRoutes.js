@@ -5,6 +5,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  createProductReview,
 } from "../controllers/productController.js";
 import { protect, admin } from "../config/authMiddleware.js";
 import { validateRequest, productAdminSchema } from "../middleware/validationMiddleware.js";
@@ -13,6 +14,7 @@ const router = express.Router();
 
 router.get("/", getProducts);
 router.get("/:id", getProductById);
+router.post("/:id/reviews", protect, createProductReview);
 
 // Admin protected endpoints
 router.post("/", protect, admin, validateRequest(productAdminSchema), createProduct);

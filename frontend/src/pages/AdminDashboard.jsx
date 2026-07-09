@@ -15,6 +15,16 @@ import {
 const CATEGORIES = ["Shirts", "Polos", "T-Shirts", "Trousers", "Jeans", "Jackets", "Sweatshirts", "Shorts"];
 const SIZES = ["S", "M", "L", "XL", "XXL"];
 
+const ALLOWED_TRANSITIONS = {
+  Processing: ["Confirmed", "Cancelled"],
+  Confirmed: ["Shipped", "Cancelled"],
+  Shipped: ["Out for Delivery"],
+  "Out for Delivery": ["Delivered"],
+  Delivered: ["Returned"],
+  Cancelled: [],
+  Returned: [],
+};
+
 export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const { showToast } = useToast();
@@ -401,12 +411,16 @@ export default function AdminDashboard() {
                       </span>
                       <select
                         value={o.status || "Processing"}
+                        disabled={!(ALLOWED_TRANSITIONS[o.status] && ALLOWED_TRANSITIONS[o.status].length > 0)}
                         onChange={(e) => handleStatusChange(o._id, e.target.value)}
-                        className="text-xs font-bold bg-paper border border-line rounded px-2.5 py-1 text-ink focus:outline-none focus:border-navy uppercase tracking-wider"
+                        className="text-xs font-bold bg-paper border border-line rounded px-2.5 py-1 text-ink focus:outline-none focus:border-navy uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        <option value="Processing">Processing</option>
-                        <option value="Dispatched">Dispatched</option>
-                        <option value="Delivered">Delivered</option>
+                        <option value={o.status} disabled>{o.status}</option>
+                        {(ALLOWED_TRANSITIONS[o.status] || []).map((st) => (
+                          <option key={st} value={st}>
+                            {st}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>

@@ -1,5 +1,7 @@
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import Coupon from "../models/Coupon.js";
+import { sendEmail } from "../utils/sendEmail.js";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 
@@ -14,6 +16,82 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
 } else {
   console.log("Razorpay credentials missing. Running checkout in Simulation Mode.");
 }
+
+// Send order status email helper
+const sendOrderStatusEmail = async (orderId, subjectLine, bodyHeading, customMessage = "") => {
+  try {
+    const order = await Order.findById(orderId).populate("user", "email name");
+    if (!order) {
+      console.log(`Could not send email: Order ${orderId} not found`);
+      return;
+    }
+
+    const userEmail = order.user?.email || (order.phone ? `${order.customerName}@test.com` : "test@test.com");
+    const userName = order.user?.name || order.customerName || "Customer";
+
+    const itemsHtml = order.items
+      .map(
+        (item) => `
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd;">${item.name} (${item.size}${item.color ? ` - ${item.color}` : ""})</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.qty}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">₹${item.price.toLocaleString("en-IN")}</td>
+        </tr>
+      `
+      )
+      .join("");
+
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
+        <h2 style="color: #1B2A4A; text-align: center;">${bodyHeading}</h2>
+        <p>Dear ${userName},</p>
+        <p>${customMessage || `Your order status has been updated.`}</p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <thead>
+            <tr style="background-color: #f4f2ec;">
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Item</th>
+              <th style="padding: 8px; border: 1px solid #ddd;">Qty</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+            ${order.discount > 0 ? `
+            <tr>
+              <td colspan="2" style="padding: 8px; border: 1px solid #ddd; font-weight: bold; text-align: right;">Discount (${order.couponCode || 'Coupon'}):</td>
+              <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold; text-align: right; color: #b91c1c;">-₹${order.discount.toLocaleString("en-IN")}</td>
+            </tr>
+            ` : ""}
+            <tr style="background-color: #fafafa;">
+              <td colspan="2" style="padding: 8px; border: 1px solid #ddd; font-weight: bold; text-align: right;">Total Bill:</td>
+              <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold; text-align: right; color: #1B2A4A;">₹${order.subtotal.toLocaleString("en-IN")}</td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <div style="margin-top: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 4px;">
+          <h4 style="margin: 0 0 10px 0; color: #1B2A4A;">Delivery Details:</h4>
+          <p style="margin: 0; font-size: 14px;"><strong>Address:</strong> ${order.address}</p>
+          <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Payment Method:</strong> ${order.paymentMethod}</p>
+          <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Current Status:</strong> <span style="text-transform: uppercase; font-weight: bold; color: #1B2A4A;">${order.status}</span></p>
+        </div>
+        
+        <p style="margin-top: 20px; text-align: center; font-size: 12px; color: #666;">
+          Thank you for shopping with Dominion Clothing!
+        </p>
+      </div>
+    `;
+
+    await sendEmail({
+      to: userEmail,
+      subject: subjectLine,
+      html: emailHtml,
+    });
+  } catch (error) {
+    console.error(`Failed to send order email for order ${orderId}:`, error);
+  }
+};
 
 // Shared helper to restore reserved stock counts for a failed/cancelled order
 export const restoreOrderStock = async (order) => {
@@ -42,7 +120,7 @@ export const restoreOrderStock = async (order) => {
 // Create order record and generate Razorpay session
 export const placeOrder = async (req, res) => {
   try {
-    const { customerName, phone, address, items, subtotal } = req.body;
+    const { customerName, phone, address, items, subtotal, couponCode, paymentMethod } = req.body;
     if (!items || items.length === 0) {
       return res.status(400).json({ message: "Cart is empty" });
     }
@@ -81,10 +159,35 @@ export const placeOrder = async (req, res) => {
       calculatedSubtotal += product.price * item.qty;
     }
 
-    // Sanity comparison logging
-    if (Math.round(calculatedSubtotal) !== Math.round(subtotal)) {
-      console.warn(`[SECURITY ALERT] Price tampering detected! Client sent subtotal of ₹${subtotal}, but server calculated ₹${calculatedSubtotal}. Overriding with server calculation.`);
+    // Recalculate Coupon validation and Discount on server
+    let discount = 0;
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+      if (!coupon) {
+        return res.status(400).json({ message: "Invalid coupon code" });
+      }
+      if (!coupon.isActive) {
+        return res.status(400).json({ message: "Coupon is no longer active" });
+      }
+      if (new Date(coupon.expirationDate) < new Date()) {
+        return res.status(400).json({ message: "Coupon has expired" });
+      }
+      if (calculatedSubtotal < coupon.minOrderAmount) {
+        return res.status(400).json({
+          message: `Minimum order amount of ₹${coupon.minOrderAmount} is required to apply this coupon.`,
+        });
+      }
+      if (coupon.discountType === "percentage") {
+        discount = Math.round((calculatedSubtotal * coupon.discountAmount) / 100);
+      } else {
+        discount = coupon.discountAmount;
+      }
+      if (discount > calculatedSubtotal) {
+        discount = calculatedSubtotal;
+      }
     }
+
+    const finalPayableTotal = calculatedSubtotal - discount;
 
     // 2. Perform atomic stock reservation
     const reservedItems = [];
@@ -136,20 +239,41 @@ export const placeOrder = async (req, res) => {
       reservedItems.push(item);
     }
 
-    // Create the order locally as "pending"
+    // Create the order locally
     const order = await Order.create({
       user: req.user ? req.user._id : null,
       customerName,
       phone,
       address,
       items: orderItems,
-      subtotal: calculatedSubtotal,
+      subtotal: finalPayableTotal,
       paymentStatus: "pending",
+      paymentMethod: paymentMethod || "Razorpay",
+      couponCode: couponCode || "",
+      coupon: couponCode || "",
+      discount: discount,
     });
+
+    if (paymentMethod === "COD") {
+      // Cash on Delivery
+      // Trigger order confirmation email immediately
+      await sendOrderStatusEmail(
+        order._id,
+        `Order Placed Successfully [COD] - Dominion Clothing`,
+        `Order Confirmed (Cash on Delivery)`,
+        `Thank you for shopping with us! Your order has been placed using Cash on Delivery (COD) and is currently being processed.`
+      );
+
+      return res.status(201).json({
+        order,
+        isMock: false,
+        paymentMethod: "COD",
+      });
+    }
 
     if (razorpayInstance) {
       const options = {
-        amount: Math.round(calculatedSubtotal * 100), // amount in paise
+        amount: Math.round(finalPayableTotal * 100), // amount in paise
         currency: "INR",
         receipt: `receipt_order_${order._id}`,
       };
@@ -208,6 +332,15 @@ export const verifyPayment = async (req, res) => {
       order.razorpayOrderId = order.razorpayOrderId || razorpayOrderId;
       order.razorpayPaymentId = razorpayPaymentId || `mock_pay_${Date.now()}`;
       await order.save();
+
+      // Trigger email
+      await sendOrderStatusEmail(
+        order._id,
+        `Payment Verified & Order Confirmed (Simulation) - Dominion Clothing`,
+        `Order Confirmed (Mock Payment)`,
+        `Thank you for shopping with us! Your mock payment has been processed, and your order is currently being processed.`
+      );
+
       return res.json({ message: "Payment verified (Simulation Mode)", order });
     }
 
@@ -223,6 +356,15 @@ export const verifyPayment = async (req, res) => {
       order.razorpayPaymentId = razorpayPaymentId;
       order.razorpaySignature = razorpaySignature;
       await order.save();
+
+      // Trigger email
+      await sendOrderStatusEmail(
+        order._id,
+        `Payment Verified & Order Confirmed - Dominion Clothing`,
+        `Order Confirmed`,
+        `Thank you for shopping with us! Your payment has been verified, and your order is currently being processed.`
+      );
+
       res.json({ message: "Payment verified successfully", order });
     } else {
       const wasPending = order.paymentStatus === "pending";
@@ -293,6 +435,14 @@ export const updateOrderStatus = async (req, res) => {
       await restoreOrderStock(order);
     }
 
+    // Trigger status update email
+    await sendOrderStatusEmail(
+      order._id,
+      `Order Status Update: ${status} - Dominion Clothing`,
+      `Order Status Updated to ${status}`,
+      `Good news! The status of your order #${order._id} has been updated to "${status}".`
+    );
+
     res.json(order);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -318,7 +468,50 @@ export const cancelOrder = async (req, res) => {
 
     order.status = "Cancelled";
     await order.save();
+
+    // Trigger cancel email
+    await sendOrderStatusEmail(
+      order._id,
+      `Order Cancelled - Dominion Clothing`,
+      `Order Cancelled`,
+      `Your order #${order._id} has been cancelled. If any payment was made, a refund will be processed shortly. Product stock levels have been restored.`
+    );
+
     res.json({ message: "Order successfully cancelled and product stock returned.", order });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Customer return order endpoint
+export const returnOrder = async (req, res) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found or unauthorized" });
+    }
+
+    if (order.status !== "Delivered") {
+      return res.status(400).json({
+        message: `Cannot return order at "${order.status}" stage. Only Delivered orders can be returned.`,
+      });
+    }
+
+    // Restore product stock counts via helper
+    await restoreOrderStock(order);
+
+    order.status = "Returned";
+    await order.save();
+
+    // Trigger return email
+    await sendOrderStatusEmail(
+      order._id,
+      `Order Returned - Dominion Clothing`,
+      `Order Returned`,
+      `We have processed your return request for order #${order._id}. A refund has been issued to the payment source, and product stock levels have been restored.`
+    );
+
+    res.json({ message: "Return request submitted successfully and product stock returned.", order });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

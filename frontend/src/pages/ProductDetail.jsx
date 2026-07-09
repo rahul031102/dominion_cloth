@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { fetchProductById, fetchProducts } from "../api/products.js";
+import { fetchProductById, fetchProducts, createProductReviewApi } from "../api/products.js";
 import { useCart } from "../context/CartContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { useWishlist } from "../context/WishlistContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import ProductCard from "../components/ProductCard.jsx";
 
 export default function ProductDetail() {
@@ -15,6 +16,34 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Review states
+  const { user } = useAuth();
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!comment.trim()) {
+      showToast("Please enter a comment.");
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      await createProductReviewApi(product._id, { rating, comment });
+      showToast("Review submitted successfully!");
+      setComment("");
+      setRating(5);
+      // Re-fetch product
+      const updatedProduct = await fetchProductById(id);
+      setProduct(updatedProduct);
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to submit review.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   // Variant & Image States
   const [selectedSize, setSelectedSize] = useState(null);
@@ -207,10 +236,10 @@ export default function ProductDetail() {
 
           {/* Rating Badge */}
           <div className="inline-flex items-center gap-1.5 border border-line bg-white rounded px-2.5 py-1 text-xs font-bold text-navy mb-5 cursor-pointer">
-            <span>{product.rating || "4.2"}</span>
+            <span>{product.rating ? product.rating.toFixed(1) : "0.0"}</span>
             <span className="text-navy text-xs">★</span>
             <span className="text-line">|</span>
-            <span className="text-gray-500 font-normal">{product.numReviews || "14"} Ratings</span>
+            <span className="text-gray-500 font-normal">{product.numReviews || 0} Ratings</span>
           </div>
 
           <hr className="border-line mb-4" />
@@ -358,6 +387,136 @@ export default function ProductDetail() {
           <p className="hidden md:block text-[11px] text-gray-500 text-center font-semibold mt-4">
             Easy 14 days returns · Free delivery on orders above ₹2,999
           </p>
+        </div>
+      </div>
+
+      {/* Reviews Section */}
+      <div className="mt-16 border-t border-line pt-12 grid md:grid-cols-12 gap-10">
+        
+        {/* Left Column: Review Summary & Write Form */}
+        <div className="md:col-span-5 space-y-8">
+          <div>
+            <h2 className="text-lg font-bold uppercase tracking-wide border-l-4 border-navy pl-3 text-ink mb-4">
+              Ratings & Reviews
+            </h2>
+            <div className="flex items-baseline gap-3">
+              <span className="text-4xl font-extrabold text-navy">
+                {product.rating ? product.rating.toFixed(1) : "0.0"}
+              </span>
+              <div className="space-y-1">
+                <div className="flex text-amber-500 text-sm">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span key={i} className="text-xs">
+                      {i < Math.round(product.rating || 0) ? "★" : "☆"}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[10px] text-gray-500 font-semibold uppercase">
+                  Based on {product.numReviews || 0} reviews
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-line p-5 rounded-lg shadow-sm">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-navy mb-4">
+              Write a Product Review
+            </h3>
+            {user ? (
+              <form onSubmit={handleReviewSubmit} className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1.5">
+                    Your Rating
+                  </label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setRating(star)}
+                        className={`text-xl focus:outline-none transition-all ${
+                          star <= rating ? "text-amber-500 scale-110" : "text-gray-300 hover:text-amber-400"
+                        }`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1.5">
+                    Your Review
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="What did you like or dislike about this product?"
+                    className="w-full border border-line rounded px-3 py-2 text-xs bg-white text-ink focus:outline-none focus:border-navy"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={submittingReview}
+                  className="w-full py-2.5 bg-navy text-white text-xs font-bold uppercase tracking-wider rounded hover:opacity-90 transition-all disabled:opacity-50"
+                >
+                  {submittingReview ? "SUBMITTING..." : "SUBMIT REVIEW"}
+                </button>
+              </form>
+            ) : (
+              <div className="text-center py-4 bg-paper rounded border border-line">
+                <p className="text-xs text-gray-500 font-semibold mb-3 uppercase">
+                  Please sign in to write a review.
+                </p>
+                <Link
+                  to={`/login?redirect=/products/${product._id}`}
+                  className="inline-block bg-navy text-white text-[10px] font-bold px-4 py-2 rounded uppercase tracking-wider hover:opacity-90"
+                >
+                  Sign In
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Reviews List */}
+        <div className="md:col-span-7 space-y-4 max-h-[500px] overflow-y-auto pr-2">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 font-body">
+            Customer Comments
+          </h3>
+          {!product.reviews || product.reviews.length === 0 ? (
+            <div className="text-center py-10 bg-white border border-line border-dashed rounded-lg text-gray-400 font-medium text-xs uppercase tracking-wide">
+              No reviews yet. Be the first to share your thoughts!
+            </div>
+          ) : (
+            product.reviews.map((r, i) => (
+              <div key={i} className="bg-white border border-line p-4 rounded-lg shadow-xs space-y-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h5 className="text-xs font-bold text-ink uppercase tracking-wide">
+                      {r.name}
+                    </h5>
+                    <div className="flex text-amber-500 text-[10px] mt-0.5">
+                      {Array.from({ length: 5 }).map((_, idx) => (
+                        <span key={idx}>{idx < r.rating ? "★" : "☆"}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-gray-400 font-semibold uppercase">
+                    {new Date(r.createdAt).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 leading-relaxed font-sans">
+                  {r.comment}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

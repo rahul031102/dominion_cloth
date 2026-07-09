@@ -179,3 +179,15 @@ export const fetchOrders = () =>
 
 export const updateOrderStatus = (id, status) =>
   api.put(`/orders/${id}/status`, { status }).then((r) => r.data);
+
+// Coupon endpoints
+export const applyCouponApi = (code, subtotal) =>
+  api.post("/coupons/apply", { code, subtotal }).then((r) => r.data);
+
+// Reviews endpoints
+export const createProductReviewApi = (productId, reviewData) =>
+  api.post(`/products/${productId}/reviews`, reviewData).then((r) => r.data);
+
+// Order return endpoints
+export const returnOrderApi = (id) =>
+  api.post(`/orders/${id}/return`).then((r) => r.data);

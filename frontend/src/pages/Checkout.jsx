@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
-import { placeOrder, verifyPayment } from "../api/products.js";
+import { placeOrder, verifyPayment, applyCouponApi } from "../api/products.js";
 
 export default function Checkout() {
   const { cart, subtotal, clearCart } = useCart();
@@ -19,6 +19,38 @@ export default function Checkout() {
   const [showSimulator, setShowSimulator] = useState(false);
   const [simulating, setSimulating] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState(null);
+
+  // Coupons & Payment States
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("Razorpay");
+
+  const handleApplyCoupon = async (e) => {
+    e.preventDefault();
+    if (!couponInput.trim()) return;
+    setApplyingCoupon(true);
+    setCouponError("");
+    try {
+      const data = await applyCouponApi(couponInput, subtotal);
+      setAppliedCoupon(data);
+      showToast(`Coupon "${data.code}" applied successfully!`);
+    } catch (err) {
+      setAppliedCoupon(null);
+      setCouponError(err.response?.data?.message || "Invalid coupon code");
+      showToast(err.response?.data?.message || "Invalid coupon code");
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError("");
+    showToast("Coupon removed.");
+  };
 
   // Authenticate user before checkout
   useEffect(() => {
@@ -70,11 +102,20 @@ export default function Checkout() {
           color: c.color || "",
         })),
         subtotal,
+        couponCode: appliedCoupon ? appliedCoupon.code : "",
+        paymentMethod,
       };
 
       // Create order locally + create Razorpay order on backend
       const response = await placeOrder(orderPayload);
       const localOrder = response.order;
+
+      if (paymentMethod === "COD") {
+        clearCart();
+        setDone(true);
+        showToast("Order placed successfully with Cash on Delivery!");
+        return;
+      }
 
       if (response.isMock) {
         // Fallback to custom sandbox simulation
@@ -263,12 +304,26 @@ export default function Checkout() {
             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">Payment Method</h4>
             <div className="space-y-2">
               <label className="flex items-center gap-3 border border-line rounded px-4 py-3 cursor-pointer bg-white hover:border-navy transition-colors">
-                <input type="radio" name="payment" className="accent-navy" defaultChecked />
+                <input 
+                  type="radio" 
+                  name="payment" 
+                  value="Razorpay"
+                  checked={paymentMethod === "Razorpay"}
+                  onChange={() => setPaymentMethod("Razorpay")}
+                  className="accent-navy" 
+                />
                 <span className="text-xs font-bold text-ink uppercase">Cards / UPI / Netbanking (Razorpay Gateway)</span>
               </label>
-              <label className="flex items-center gap-3 border border-line rounded px-4 py-3 cursor-pointer opacity-40 bg-white">
-                <input type="radio" name="payment" disabled />
-                <span className="text-xs font-bold text-gray-400 uppercase">Cash on Delivery (Disabled)</span>
+              <label className="flex items-center gap-3 border border-line rounded px-4 py-3 cursor-pointer bg-white hover:border-navy transition-colors">
+                <input 
+                  type="radio" 
+                  name="payment" 
+                  value="COD"
+                  checked={paymentMethod === "COD"}
+                  onChange={() => setPaymentMethod("COD")}
+                  className="accent-navy" 
+                />
+                <span className="text-xs font-bold text-ink uppercase">Cash on Delivery (COD)</span>
               </label>
             </div>
             <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-wide">
@@ -288,7 +343,9 @@ export default function Checkout() {
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
-                {`Pay ₹${subtotal.toLocaleString("en-IN")}`}
+                {paymentMethod === "COD" 
+                  ? `Place Order (COD) - ₹${(appliedCoupon ? appliedCoupon.finalTotal : subtotal).toLocaleString("en-IN")}`
+                  : `Pay ₹${(appliedCoupon ? appliedCoupon.finalTotal : subtotal).toLocaleString("en-IN")}`}
               </>
             )}
           </button>
@@ -325,11 +382,58 @@ export default function Checkout() {
           ))}
         </div>
 
+        {/* Coupon Section */}
+        <div className="border-t border-b border-line my-6 py-4">
+          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">Apply Promo Code</label>
+          {appliedCoupon ? (
+            <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded px-3 py-2 text-xs">
+              <div>
+                <span className="font-bold text-green-700 uppercase tracking-wide">{appliedCoupon.code}</span>
+                <span className="text-gray-500 ml-1.5 font-medium">Applied (-₹{appliedCoupon.discount})</span>
+              </div>
+              <button 
+                type="button" 
+                onClick={handleRemoveCoupon} 
+                className="text-gray-400 hover:text-crimson text-sm font-bold"
+              >
+                &times;
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={couponInput}
+                onChange={(e) => setCouponInput(e.target.value)}
+                placeholder="WELCOME10, SAVE20..."
+                className="flex-1 border border-line rounded px-3 py-2 text-xs bg-white uppercase tracking-wider text-ink focus:outline-none focus:border-navy"
+              />
+              <button
+                type="button"
+                onClick={handleApplyCoupon}
+                disabled={applyingCoupon || !couponInput.trim()}
+                className="px-4 py-2 bg-navy text-white text-xs font-bold uppercase tracking-wider rounded hover:opacity-90 disabled:opacity-50 transition-all shrink-0"
+              >
+                {applyingCoupon ? "APPLYING..." : "APPLY"}
+              </button>
+            </div>
+          )}
+          {couponError && (
+            <p className="text-[10px] text-crimson font-semibold uppercase tracking-wide mt-1.5">{couponError}</p>
+          )}
+        </div>
+
         <div className="border-t border-line mt-6 pt-4 space-y-2.5 text-xs text-gray-600">
           <div className="flex justify-between">
             <span>Manifest Subtotal</span>
             <span>₹{subtotal.toLocaleString("en-IN")}</span>
           </div>
+          {appliedCoupon && (
+            <div className="flex justify-between text-crimson font-semibold">
+              <span>Coupon Discount ({appliedCoupon.code})</span>
+              <span>-₹{appliedCoupon.discount.toLocaleString("en-IN")}</span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span>Delivery Fee</span>
             <span className="text-navy font-bold">FREE</span>
@@ -337,7 +441,7 @@ export default function Checkout() {
           <hr className="border-line my-2" />
           <div className="flex justify-between font-bold text-sm text-navy uppercase tracking-wider">
             <span>Total Payable</span>
-            <span>₹{subtotal.toLocaleString("en-IN")}</span>
+            <span>₹{(appliedCoupon ? appliedCoupon.finalTotal : subtotal).toLocaleString("en-IN")}</span>
           </div>
         </div>
       </div>
