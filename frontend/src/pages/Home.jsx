@@ -14,7 +14,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchProducts("New")
-      .then(setNewIn)
+      .then((data) => setNewIn(data.products || []))
       .catch(() => setNewIn([]))
       .finally(() => setLoading(false));
   }, []);

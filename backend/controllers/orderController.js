@@ -1,4 +1,5 @@
 import Order from "../models/Order.js";
+import Product from "../models/Product.js";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 
@@ -78,18 +79,20 @@ export const placeOrder = async (req, res) => {
 // Verify payment signature
 export const verifyPayment = async (req, res) => {
   try {
-    const { orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature, isMock } = req.body;
+    const { orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
 
     const order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    if (isMock || !razorpayInstance) {
+    const isMockOrder = !razorpayInstance || (order.razorpayOrderId && order.razorpayOrderId.startsWith("mock_order_"));
+
+    if (isMockOrder) {
       // Simulator mode verification
       order.paymentStatus = "paid";
       order.paymentId = razorpayPaymentId || `mock_pay_${Date.now()}`;
-      order.razorpayOrderId = razorpayOrderId || order.razorpayOrderId;
+      order.razorpayOrderId = order.razorpayOrderId || razorpayOrderId;
       order.razorpayPaymentId = razorpayPaymentId || `mock_pay_${Date.now()}`;
       await order.save();
       return res.json({ message: "Payment verified (Simulation Mode)", order });
@@ -138,7 +141,17 @@ export const getOrders = async (req, res) => {
   }
 };
 
-// Admin update order delivery/processing status
+const ALLOWED_TRANSITIONS = {
+  Processing: ["Confirmed", "Cancelled"],
+  Confirmed: ["Shipped", "Cancelled"],
+  Shipped: ["Out for Delivery"],
+  "Out for Delivery": ["Delivered"],
+  Delivered: ["Returned"],
+  Cancelled: [],
+  Returned: [],
+};
+
+// Admin update order delivery/processing status with state machine verification
 export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -146,10 +159,60 @@ export const updateOrderStatus = async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
+
+    const validNextStates = ALLOWED_TRANSITIONS[order.status] || [];
+    if (!validNextStates.includes(status)) {
+      return res.status(400).json({
+        message: `Invalid transition from "${order.status}" to "${status}". Allowed: ${validNextStates.join(", ") || "None"}`,
+      });
+    }
+
     order.status = status;
     await order.save();
     res.json(order);
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+};
+
+// Customer cancel order endpoint
+export const cancelOrder = async (req, res) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found or unauthorized" });
+    }
+
+    if (order.status !== "Processing" && order.status !== "Confirmed") {
+      return res.status(400).json({
+        message: `Cannot cancel order at "${order.status}" stage. Only Processing or Confirmed orders are cancellable.`,
+      });
+    }
+
+    // Restore product stock counts
+    for (const item of order.items) {
+      if (item.product) {
+        const product = await Product.findById(item.product);
+        if (product) {
+          // Adjust variant stock
+          const variant = product.variants?.find(
+            (v) => v.size === item.size && (!item.color || v.color === item.color)
+          );
+          if (variant) {
+            variant.stock += item.qty;
+          }
+          if (product.stock !== undefined) {
+            product.stock += item.qty;
+          }
+          await product.save();
+        }
+      }
+    }
+
+    order.status = "Cancelled";
+    await order.save();
+    res.json({ message: "Order successfully cancelled and product stock returned.", order });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

@@ -10,32 +10,57 @@ const SIZES = ["S", "M", "L", "XL", "30", "32", "34", "36"];
 const COLORS = ["#000000", "#FFFFFF", "#1B2A4A", "#C9BFA6", "#3A3A32", "#14213D", "#5C1F26", "#1C1C1C", "#2E3A4E"];
 
 export default function Products() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Parse filters directly from URL query parameters
   const activeCategory = searchParams.get("cat") || "All";
   const searchQuery = searchParams.get("q") || "";
+  const selectedBrands = searchParams.get("brand") ? searchParams.get("brand").split(",") : [];
+  const selectedSizes = searchParams.get("size") ? searchParams.get("size").split(",") : [];
+  const selectedColors = searchParams.get("color") ? searchParams.get("color").split(",") : [];
+  const minPrice = searchParams.get("minPrice") || "";
+  const maxPrice = searchParams.get("maxPrice") || "";
+  const sort = searchParams.get("sort") || "newest";
+  const page = Number(searchParams.get("page")) || 1;
+
+  // Local inputs state for price inputs to prevent instant URL update on typing
+  const [minPriceInput, setMinPriceInput] = useState(minPrice);
+  const [maxPriceInput, setMaxPriceInput] = useState(maxPrice);
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
 
-  // Filter & Pagination States
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [count, setCount] = useState(0);
-
-  const [selectedBrands, setSelectedBrands] = useState([]);
-  const [selectedSizes, setSelectedSizes] = useState([]);
-  const [selectedColors, setSelectedColors] = useState([]);
-  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
-  const [minPriceInput, setMinPriceInput] = useState("");
-  const [maxPriceInput, setMaxPriceInput] = useState("");
-  const [sort, setSort] = useState("newest");
-
-  // Reset page to 1 when filters or search change
+  // Sync inputs with URL parameter changes (e.g. on clear all)
   useEffect(() => {
-    setPage(1);
-  }, [activeCategory, searchQuery, selectedBrands, selectedSizes, selectedColors, priceRange, sort]);
+    setMinPriceInput(minPrice);
+    setMaxPriceInput(maxPrice);
+  }, [minPrice, maxPrice]);
 
-  // Fetch products based on filters
+  // Update query parameters in the URL
+  const updateUrlParams = (updates) => {
+    const nextParams = new URLSearchParams(searchParams);
+    
+    // Reset to page 1 on any filter change unless page is explicitly updated
+    if (!updates.hasOwnProperty("page")) {
+      nextParams.set("page", "1");
+    }
+
+    Object.entries(updates).forEach(([key, val]) => {
+      if (val === "" || val === null || (Array.isArray(val) && val.length === 0)) {
+        nextParams.delete(key);
+      } else if (Array.isArray(val)) {
+        nextParams.set(key, val.join(","));
+      } else {
+        nextParams.set(key, val.toString());
+      }
+    });
+
+    setSearchParams(nextParams);
+  };
+
+  // Fetch products from server on searchParams change
   useEffect(() => {
     setLoading(true);
     const filterParams = {
@@ -44,61 +69,64 @@ export default function Products() {
       brand: selectedBrands.join(","),
       size: selectedSizes.join(","),
       color: selectedColors.join(","),
-      minPrice: priceRange.min,
-      maxPrice: priceRange.max,
+      minPrice,
+      maxPrice,
       sort,
       pageNumber: page,
-      pageSize: 8, // Page size of 8 to demonstrate pagination
+      pageSize: 8, // Page size of 8
     };
 
     fetchProducts(filterParams)
       .then((data) => {
         setProducts(data.products || []);
-        setPages(data.pages || 1);
-        setCount(data.count || 0);
+        setTotalPages(data.totalPages || data.pages || 1);
+        setTotalResults(data.totalResults !== undefined ? data.totalResults : data.count || 0);
       })
       .catch((err) => {
         console.error(err);
         setProducts([]);
-        setPages(1);
-        setCount(0);
+        setTotalPages(1);
+        setTotalResults(0);
       })
       .finally(() => {
         setLoading(false);
       });
-  }, [activeCategory, searchQuery, selectedBrands, selectedSizes, selectedColors, priceRange, sort, page]);
+  }, [activeCategory, searchQuery, searchParams]); // watch searchParams object
 
   const handleBrandChange = (brand) => {
-    setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
-    );
+    const nextBrands = selectedBrands.includes(brand)
+      ? selectedBrands.filter((b) => b !== brand)
+      : [...selectedBrands, brand];
+    updateUrlParams({ brand: nextBrands });
   };
 
   const handleSizeChange = (size) => {
-    setSelectedSizes((prev) =>
-      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
-    );
+    const nextSizes = selectedSizes.includes(size)
+      ? selectedSizes.filter((s) => s !== size)
+      : [...selectedSizes, size];
+    updateUrlParams({ size: nextSizes });
   };
 
   const handleColorToggle = (color) => {
-    setSelectedColors((prev) =>
-      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]
-    );
+    const nextColors = selectedColors.includes(color)
+      ? selectedColors.filter((c) => c !== color)
+      : [...selectedColors, color];
+    updateUrlParams({ color: nextColors });
   };
 
   const applyPriceFilter = (e) => {
     e.preventDefault();
-    setPriceRange({ min: minPriceInput, max: maxPriceInput });
+    updateUrlParams({ minPrice: minPriceInput, maxPrice: maxPriceInput });
   };
 
   const clearAllFilters = () => {
-    setSelectedBrands([]);
-    setSelectedSizes([]);
-    setSelectedColors([]);
+    const nextParams = new URLSearchParams();
+    if (activeCategory !== "All") nextParams.set("cat", activeCategory);
+    if (searchQuery) nextParams.set("q", searchQuery);
+    nextParams.set("page", "1");
+    setSearchParams(nextParams);
     setMinPriceInput("");
     setMaxPriceInput("");
-    setPriceRange({ min: "", max: "" });
-    setSort("newest");
   };
 
   return (
@@ -111,7 +139,7 @@ export default function Products() {
             {searchQuery ? `Search Results for "${searchQuery}"` : activeCategory === "All" ? "Shop All Collection" : `${activeCategory} Collection`}
           </h1>
           <p className="text-xs text-gray-500 mt-1 uppercase tracking-wide">
-            {loading ? "Loading items..." : `${count} matches found`}
+            {loading ? "Loading items..." : `${totalResults} matches found`}
           </p>
         </div>
 
@@ -120,7 +148,7 @@ export default function Products() {
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SORT BY</label>
           <select
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) => updateUrlParams({ sort: e.target.value })}
             className="text-xs font-bold uppercase tracking-wider bg-white border border-line rounded px-3 py-2 text-ink focus:outline-none focus:border-navy"
           >
             <option value="newest">New Arrivals</option>
@@ -289,22 +317,22 @@ export default function Products() {
           )}
 
           {/* Pagination Controls */}
-          {pages > 1 && (
+          {totalPages > 1 && (
             <div className="flex justify-center items-center gap-1.5 pt-6 border-t border-line/60">
               <button
                 disabled={page === 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                onClick={() => updateUrlParams({ page: Math.max(1, page - 1) })}
                 className="px-3.5 py-2 border border-line text-xs font-bold text-ink uppercase rounded hover:border-navy disabled:opacity-40 disabled:hover:border-line"
               >
                 Prev
               </button>
-              {[...Array(pages)].map((_, i) => {
+              {[...Array(totalPages)].map((_, i) => {
                 const pNum = i + 1;
                 const isAct = pNum === page;
                 return (
                   <button
                     key={pNum}
-                    onClick={() => setPage(pNum)}
+                    onClick={() => updateUrlParams({ page: pNum })}
                     className={`w-9 h-9 border text-xs font-bold rounded flex items-center justify-center transition-all ${
                       isAct
                         ? "bg-navy text-white border-navy"
@@ -316,8 +344,8 @@ export default function Products() {
                 );
               })}
               <button
-                disabled={page === pages}
-                onClick={() => setPage((p) => Math.min(pages, p + 1))}
+                disabled={page === totalPages}
+                onClick={() => updateUrlParams({ page: Math.min(totalPages, page + 1) })}
                 className="px-3.5 py-2 border border-line text-xs font-bold text-ink uppercase rounded hover:border-navy disabled:opacity-40 disabled:hover:border-line"
               >
                 Next

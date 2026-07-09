@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
-import { fetchMyOrders } from "../api/products.js";
+import { fetchMyOrders, cancelOrderApi } from "../api/products.js";
+
+const STEPS = ["Processing", "Confirmed", "Shipped", "Out for Delivery", "Delivered"];
 
 export default function MyOrders() {
   const { user, loading: authLoading } = useAuth();
@@ -33,22 +35,35 @@ export default function MyOrders() {
     }
   };
 
-  const getStepStatusClass = (orderStatus, step) => {
-    const steps = ["Processing", "Dispatched", "Delivered"];
-    const currentIndex = steps.indexOf(orderStatus || "Processing");
-    const stepIndex = steps.indexOf(step);
-
-    if (stepIndex <= currentIndex) {
-      return "bg-navy text-white border-navy";
+  const handleCancelOrder = async (orderId) => {
+    if (
+      window.confirm(
+        "Are you sure you want to cancel this order? This will restore item stock levels and void your delivery."
+      )
+    ) {
+      try {
+        await cancelOrderApi(orderId);
+        showToast("Order cancelled successfully.");
+        loadOrders();
+      } catch (err) {
+        showToast(err.response?.data?.message || "Failed to cancel order.");
+      }
     }
-    return "bg-white text-gray-400 border-line";
   };
 
-  const getStepLineClass = (orderStatus, step) => {
-    const steps = ["Processing", "Dispatched", "Delivered"];
-    const currentIndex = steps.indexOf(orderStatus || "Processing");
-    const stepIndex = steps.indexOf(step);
+  const getStepStatusClass = (orderStatus, step) => {
+    const currentIndex = STEPS.indexOf(orderStatus);
+    const stepIndex = STEPS.indexOf(step);
+    if (currentIndex === -1) return "bg-white text-gray-300 border-line"; // e.g. Cancelled/Returned
+    if (stepIndex <= currentIndex) {
+      return "bg-navy text-white border-navy font-bold";
+    }
+    return "bg-white text-gray-400 border-line font-medium";
+  };
 
+  const getStepLineClass = (orderStatus, stepIndex) => {
+    const currentIndex = STEPS.indexOf(orderStatus);
+    if (currentIndex === -1) return "bg-line";
     if (stepIndex < currentIndex) {
       return "bg-navy";
     }
@@ -124,17 +139,30 @@ export default function MyOrders() {
                   </div>
                 </div>
 
-                <div className="flex gap-2.5">
+                <div className="flex items-center gap-3">
                   <span className="px-3 py-1 rounded text-[10px] font-extrabold uppercase tracking-widest border bg-navy/5 text-navy border-navy/20">
                     Payment: {o.paymentStatus}
                   </span>
+                  
                   <span className={`px-3 py-1 rounded text-[10px] font-extrabold uppercase tracking-widest border ${
                     o.status === "Delivered" 
                       ? "bg-green-50 text-green-700 border-green-200" 
+                      : o.status === "Cancelled"
+                      ? "bg-crimson/5 text-crimson border-crimson/20"
                       : "bg-[#1B2A4A]/5 text-navy border-[#1B2A4A]/10"
                   }`}>
                     {o.status || "Processing"}
                   </span>
+
+                  {/* Customer Cancel button */}
+                  {(o.status === "Processing" || o.status === "Confirmed") && (
+                    <button
+                      onClick={() => handleCancelOrder(o._id)}
+                      className="px-3.5 py-1.5 border border-crimson/30 hover:border-crimson text-crimson bg-white hover:bg-crimson/5 text-[10px] font-extrabold uppercase tracking-widest rounded transition-all active:scale-95"
+                    >
+                      Cancel Order
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -152,7 +180,7 @@ export default function MyOrders() {
                         <div className="flex-1 min-w-0">
                           <h5 className="font-bold text-xs uppercase text-ink tracking-wide truncate">{item.name}</h5>
                           <p className="text-[10px] text-gray-500 font-medium uppercase mt-0.5">
-                            Size: {item.size} · Qty: {item.qty}
+                            Size: {item.size} {item.color && `· Color: ${item.color}`} · Qty: {item.qty}
                           </p>
                         </div>
                         <span className="text-xs font-bold text-ink shrink-0">
@@ -178,50 +206,64 @@ export default function MyOrders() {
               </div>
 
               {/* Tracker Timeline Footer */}
-              <div className="border-t border-line px-5 py-4 bg-white">
+              <div className="border-t border-line px-5 py-5 bg-white">
                 <h4 className="text-[10px] font-bold text-navy uppercase tracking-widest mb-4">
                   REALTIME DELIVERY PROGRESS
                 </h4>
                 
-                <div className="flex items-center w-full max-w-lg mx-auto relative py-2 mb-2">
-                  {/* Progress Line */}
-                  <div className="absolute left-0 right-0 h-0.5 top-1/2 -translate-y-1/2 bg-line -z-10" />
-                  
-                  {/* Dynamic Colored Lines */}
-                  <div 
-                    className={`absolute left-0 h-0.5 top-1/2 -translate-y-1/2 ${getStepLineClass(o.status, "Dispatched")} -z-10`}
-                    style={{ width: "50%" }}
-                  />
-                  <div 
-                    className={`absolute left-[50%] h-0.5 top-1/2 -translate-y-1/2 ${getStepLineClass(o.status, "Delivered")} -z-10`}
-                    style={{ width: "50%" }}
-                  />
-
-                  {/* Processing Step */}
-                  <div className="flex flex-col items-center flex-1 relative">
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold transition-colors ${getStepStatusClass(o.status, "Processing")}`}>
-                      1
-                    </div>
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 mt-2">Processing</span>
+                {/* Timeline Render */}
+                {o.status === "Cancelled" && (
+                  <div className="flex items-center gap-3 bg-crimson/5 border border-crimson/20 p-4 rounded text-crimson font-bold text-xs uppercase tracking-wider">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="15" y1="9" x2="9" y2="15" />
+                      <line x1="9" y1="9" x2="15" y2="15" />
+                    </svg>
+                    <span>This order was cancelled. Product inventory count has been restored.</span>
                   </div>
+                )}
 
-                  {/* Dispatched Step */}
-                  <div className="flex flex-col items-center flex-1 relative">
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold transition-colors ${getStepStatusClass(o.status, "Dispatched")}`}>
-                      2
-                    </div>
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 mt-2">Dispatched</span>
+                {o.status === "Returned" && (
+                  <div className="flex items-center gap-3 bg-gray-50 border border-line p-4 rounded text-gray-500 font-bold text-xs uppercase tracking-wider">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0">
+                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      <path d="M3 3v5h5" />
+                    </svg>
+                    <span>This order has been returned. A refund has been issued to the payment source.</span>
                   </div>
+                )}
 
-                  {/* Delivered Step */}
-                  <div className="flex flex-col items-center flex-1 relative">
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold transition-colors ${getStepStatusClass(o.status, "Delivered")}`}>
-                      3
+                {o.status !== "Cancelled" && o.status !== "Returned" && (
+                  <div className="relative py-4 mb-2 flex items-center justify-between">
+                    {/* Connector lines behind steps */}
+                    <div className="absolute left-[10%] right-[10%] h-0.5 bg-line -z-10 top-1/2 -translate-y-1/2" />
+                    
+                    {/* Dynamic segment progression coloring */}
+                    <div className="absolute left-[10%] right-[10%] h-0.5 -z-10 top-1/2 -translate-y-1/2 flex">
+                      {STEPS.slice(0, -1).map((_, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex-1 h-full transition-all duration-300 ${getStepLineClass(o.status, idx)}`}
+                        />
+                      ))}
                     </div>
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 mt-2">Delivered</span>
-                  </div>
 
-                </div>
+                    {STEPS.map((step, idx) => {
+                      const statusClass = getStepStatusClass(o.status, step);
+                      return (
+                        <div key={step} className="flex flex-col items-center flex-1 text-center">
+                          <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] transition-all ${statusClass}`}>
+                            {idx + 1}
+                          </div>
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 mt-2 block max-w-[80px]">
+                            {step}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
               </div>
 
             </div>

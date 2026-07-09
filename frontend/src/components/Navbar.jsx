@@ -3,11 +3,13 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
+import { useWishlist } from "../context/WishlistContext.jsx";
 
 export default function Navbar() {
   const { count, setIsOpen } = useCart();
   const { user, logout } = useAuth();
   const { showToast } = useToast();
+  const { wishlist } = useWishlist();
   
   const [menuOpen, setMenuOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -182,6 +184,13 @@ export default function Navbar() {
                   >
                     My Orders
                   </Link>
+                  <Link
+                    to="/wishlist"
+                    onClick={() => setShowProfileDropdown(false)}
+                    className="block px-4 py-2 text-ink hover:bg-[#FAFAF8] hover:text-navy transition-colors uppercase tracking-wide font-bold"
+                  >
+                    My Wishlist
+                  </Link>
                   {user.isAdmin && (
                     <Link
                       to="/admin"
@@ -212,6 +221,22 @@ export default function Navbar() {
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
               <span className="text-[9px] font-bold tracking-wider uppercase">New In</span>
+            </Link>
+            
+            {/* Wishlist Icon */}
+            <Link
+              to="/wishlist"
+              className="relative flex flex-col items-center cursor-pointer text-ink hover:text-navy transition-colors"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="mb-1">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              <span className="text-[9px] font-bold tracking-wider uppercase">Wishlist</span>
+              {wishlist.length > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-navy text-white text-[8px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center">
+                  {wishlist.length}
+                </span>
+              )}
             </Link>
 
             {/* Shopping Bag */}
@@ -328,6 +353,13 @@ export default function Navbar() {
                     className="text-[10px] text-gray-700 font-extrabold uppercase tracking-wider hover:text-navy transition-colors py-1"
                   >
                     My Orders
+                  </Link>
+                  <Link
+                    to="/wishlist"
+                    onClick={() => setMenuOpen(false)}
+                    className="text-[10px] text-gray-700 font-extrabold uppercase tracking-wider hover:text-navy transition-colors py-1"
+                  >
+                    My Wishlist
                   </Link>
                   <button
                     onClick={() => {

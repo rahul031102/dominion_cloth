@@ -58,10 +58,10 @@ export default function AdminDashboard() {
     setLoadingData(true);
     try {
       const [allProds, allOrders] = await Promise.all([
-        fetchProducts(),
+        fetchProducts({ pageSize: 1000 }),
         fetchOrders(),
       ]);
-      setProducts(allProds);
+      setProducts(allProds.products || []);
       setOrders(allOrders);
     } catch (err) {
       console.error(err);

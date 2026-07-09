@@ -35,12 +35,24 @@ export const WishlistProvider = ({ children }) => {
     if (!user) {
       return false; // Suggest redirection to login
     }
+
+    const wasWished = wishlist.some((item) => (item._id || item) === productId);
+    const originalWishlist = [...wishlist];
+
+    if (wasWished) {
+      setWishlist((prev) => prev.filter((item) => (item._id || item) !== productId));
+    } else {
+      setWishlist((prev) => [...prev, { _id: productId }]);
+    }
+
     try {
       const data = await toggleWishlistApi(productId);
       setWishlist(data);
       return true;
     } catch (err) {
       console.error("Error toggling wishlist:", err);
+      // Rollback on error
+      setWishlist(originalWishlist);
       return false;
     }
   };

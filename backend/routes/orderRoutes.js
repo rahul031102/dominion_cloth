@@ -5,6 +5,7 @@ import {
   updateOrderStatus,
   verifyPayment,
   getMyOrders,
+  cancelOrder,
 } from "../controllers/orderController.js";
 import { protect, admin } from "../config/authMiddleware.js";
 
@@ -14,6 +15,7 @@ const router = express.Router();
 router.post("/", protect, placeOrder);
 router.post("/verify", protect, verifyPayment);
 router.get("/mine", protect, getMyOrders);
+router.post("/:id/cancel", protect, cancelOrder);
 
 // Admin protected endpoints
 router.get("/", protect, admin, getOrders);

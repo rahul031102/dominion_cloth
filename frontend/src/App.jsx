@@ -15,6 +15,7 @@ import Profile from "./pages/Profile.jsx";
 import VerifyEmail from "./pages/VerifyEmail.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
+import Wishlist from "./pages/Wishlist.jsx";
 
 export default function App() {
   const [appLoading, setAppLoading] = useState(true);
@@ -67,6 +68,7 @@ export default function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/wishlist" element={<Wishlist />} />
         </Routes>
       </main>
       <Footer />

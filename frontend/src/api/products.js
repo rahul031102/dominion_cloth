@@ -112,6 +112,9 @@ export const verifyPayment = (verificationData) =>
 export const fetchMyOrders = () =>
   api.get("/orders/mine").then((r) => r.data);
 
+export const cancelOrderApi = (id) =>
+  api.post(`/orders/${id}/cancel`).then((r) => r.data);
+
 // Auth Endpoints
 export const loginUser = (email, password) =>
   api.post("/users/login", { email, password }).then((r) => r.data);
