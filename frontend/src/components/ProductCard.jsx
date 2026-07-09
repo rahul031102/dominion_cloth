@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useWishlist } from "../context/WishlistContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
+import { getProductImage } from "../utils/images.js";
 
 export default function ProductCard({ product }) {
   const { toggleWishlist, inWishlist } = useWishlist();
@@ -52,7 +53,7 @@ export default function ProductCard({ product }) {
 
       <div className="relative aspect-[3/4] overflow-hidden bg-paper border-b border-line">
         <img
-          src={product.image}
+          src={getProductImage(product)}
           alt={product.name}
           loading="lazy"
           onLoad={(e) => e.currentTarget.classList.add("img-fade")}

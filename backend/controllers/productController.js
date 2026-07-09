@@ -1,5 +1,63 @@
 import Product from "../models/Product.js";
 
+const normalizeList = (value) => {
+  if (Array.isArray(value)) {
+    return [...new Set(value.map((item) => (typeof item === "string" ? item.trim() : item)).filter(Boolean))];
+  }
+
+  if (typeof value === "string") {
+    return [...new Set(value.split(",").map((item) => item.trim()).filter(Boolean))];
+  }
+
+  return [];
+};
+
+const buildVariants = (data) => {
+  const sizes = normalizeList(data.sizes);
+  const colors = normalizeList(data.colors);
+  const stock = Number(data.stock ?? 0);
+
+  if (Array.isArray(data.variants) && data.variants.length > 0) {
+    data.variants = data.variants
+      .map((variant) => ({
+        size: variant.size?.trim(),
+        color: variant.color?.trim(),
+        stock: Number(variant.stock ?? stock),
+      }))
+      .filter((variant) => variant.size && variant.color);
+  } else if (sizes.length > 0 && colors.length > 0) {
+    data.variants = sizes.flatMap((size) =>
+      colors.map((color) => ({
+        size,
+        color,
+        stock,
+      }))
+    );
+  } else if (sizes.length > 0) {
+    data.variants = sizes.map((size) => ({
+      size,
+      color: colors[0] || "Default",
+      stock,
+    }));
+  } else if (colors.length > 0) {
+    data.variants = colors.map((color) => ({
+      size: "Default",
+      color,
+      stock,
+    }));
+  } else {
+    data.variants = [];
+  }
+
+  data.sizes = sizes;
+  data.colors = colors;
+  data.stock = data.variants.length
+    ? data.variants.reduce((total, variant) => total + Number(variant.stock || 0), 0)
+    : stock;
+
+  return data;
+};
+
 // Fetch filtered, sorted and paginated products
 export const getProducts = async (req, res) => {
   try {
@@ -113,14 +171,25 @@ export const getProductById = async (req, res) => {
 
 // Admin CRUD Helper to align sizes/colors list with variants array
 const syncProductFields = (data) => {
-  if (data.variants && Array.isArray(data.variants)) {
-    data.sizes = [...new Set(data.variants.map((v) => v.size))].filter(Boolean);
-    data.colors = [...new Set(data.variants.map((v) => v.color))].filter(Boolean);
+  if (data.price !== undefined) {
+    data.price = Number(data.price);
   }
-  if (data.image && (!data.images || data.images.length === 0)) {
-    data.images = [data.image];
+  if (data.mrp !== undefined) {
+    data.mrp = Number(data.mrp);
   }
-  return data;
+  if (data.stock !== undefined) {
+    data.stock = Number(data.stock);
+  }
+
+  data.images = normalizeList(data.images);
+  if (data.image) {
+    data.images = [data.image, ...data.images.filter((url) => url !== data.image)];
+  }
+  if (!data.image && data.images.length > 0) {
+    data.image = data.images[0];
+  }
+
+  return buildVariants(data);
 };
 
 // Admin create product

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useWishlist } from "../context/WishlistContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
+import { getProductImage } from "../utils/images.js";
 
 export default function Wishlist() {
   const { wishlist, toggleWishlist, loading } = useWishlist();
@@ -88,7 +89,7 @@ export default function Wishlist() {
                 {/* Image & Tag */}
                 <Link to={`/product/${p._id}`} className="block relative aspect-[3/4] overflow-hidden bg-paper border-b border-line">
                   <img
-                    src={p.image}
+                    src={getProductImage(p)}
                     alt={p.name}
                     className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
                   />

@@ -10,7 +10,9 @@ import {
   deleteProduct,
   fetchOrders,
   updateOrderStatus,
+  uploadProductImageApi,
 } from "../api/products.js";
+import { getProductImage } from "../utils/images.js";
 
 const CATEGORIES = ["Shirts", "Polos", "T-Shirts", "Trousers", "Jeans", "Jackets", "Sweatshirts", "Shorts"];
 const SIZES = ["S", "M", "L", "XL", "XXL"];
@@ -23,6 +25,10 @@ const ALLOWED_TRANSITIONS = {
   Delivered: ["Returned"],
   Cancelled: [],
   Returned: [],
+};
+
+const mergeUniqueImages = (mainImage, images = []) => {
+  return [...new Set([mainImage, ...images].filter(Boolean))];
 };
 
 export default function AdminDashboard() {
@@ -50,7 +56,10 @@ export default function AdminDashboard() {
     image: "",
     description: "",
     stock: "",
+    images: [],
   });
+  const [uploadingMainImage, setUploadingMainImage] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
   // Verify Admin Access
   useEffect(() => {
@@ -106,6 +115,7 @@ export default function AdminDashboard() {
       image: "",
       description: "",
       stock: "10",
+      images: [],
     });
     setShowModal(true);
   };
@@ -123,19 +133,78 @@ export default function AdminDashboard() {
       sizes: prod.sizes || [],
       image: prod.image,
       description: prod.description || "",
-      stock: prod.stock ? prod.stock.toString() : "10",
+      stock: prod.stock !== undefined && prod.stock !== null ? prod.stock.toString() : "10",
+      images: prod.images?.length ? prod.images : prod.image ? [prod.image] : [],
     });
     setShowModal(true);
+  };
+
+  const handleMainImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingMainImage(true);
+    try {
+      const { url } = await uploadProductImageApi(file);
+      setForm((prev) => ({
+        ...prev,
+        image: url,
+        images: mergeUniqueImages(url, prev.images),
+      }));
+      showToast("Main image uploaded to Cloudinary.");
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to upload image.");
+    } finally {
+      setUploadingMainImage(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleGalleryUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setUploadingGallery(true);
+    try {
+      const uploads = await Promise.all(files.map((file) => uploadProductImageApi(file)));
+      const urls = uploads.map((item) => item.url);
+      setForm((prev) => ({
+        ...prev,
+        image: prev.image || urls[0],
+        images: mergeUniqueImages(prev.image || urls[0], [...prev.images, ...urls]),
+      }));
+      showToast(`${urls.length} gallery image(s) uploaded.`);
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to upload gallery images.");
+    } finally {
+      setUploadingGallery(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemoveImage = (imageUrl) => {
+    setForm((prev) => {
+      const nextImages = prev.images.filter((url) => url !== imageUrl);
+      const nextMainImage = prev.image === imageUrl ? nextImages[0] || "" : prev.image;
+      return {
+        ...prev,
+        image: nextMainImage,
+        images: nextMainImage ? mergeUniqueImages(nextMainImage, nextImages) : nextImages,
+      };
+    });
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     try {
+      const normalizedImages = mergeUniqueImages(form.image, form.images);
       const payload = {
         ...form,
         price: Number(form.price),
         mrp: Number(form.mrp || form.price),
-        stock: Number(form.stock || 10),
+        stock: form.stock === "" ? 10 : Number(form.stock),
+        image: form.image || normalizedImages[0] || "",
+        images: normalizedImages,
         colors: form.colors
           ? form.colors.split(",").map((c) => c.trim()).filter(Boolean)
           : [],
@@ -324,7 +393,7 @@ export default function AdminDashboard() {
                     <tr key={p._id} className="hover:bg-paper/30 transition-colors">
                       <td className="px-6 py-4 flex items-center gap-3">
                         <img
-                          src={p.image}
+                          src={getProductImage(p)}
                           alt={p.name}
                           className="w-10 h-12 object-cover rounded border border-line bg-paper"
                         />
@@ -349,7 +418,7 @@ export default function AdminDashboard() {
                           <span className="text-gray-400">&mdash;</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 font-semibold text-gray-700">{p.stock || 10}</td>
+                        <td className="px-6 py-4 font-semibold text-gray-700">{p.stock ?? 0}</td>
                       <td className="px-6 py-4 text-right space-x-3">
                         <button
                           onClick={() => openEditModal(p)}
@@ -592,18 +661,80 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">
-                  Product Image URL
-                </label>
-                <input
-                  required
-                  name="image"
-                  value={form.image}
-                  onChange={handleInputChange}
-                  className="w-full border border-line rounded px-3 py-2 text-xs bg-white text-ink focus:outline-none focus:border-navy"
-                  placeholder="https://images.unsplash.com/photo-xxx..."
-                />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">
+                    Product Images
+                  </label>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                    {uploadingMainImage || uploadingGallery ? "Uploading..." : "Cloudinary enabled"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="border border-dashed border-line rounded px-3 py-3 text-xs font-bold uppercase tracking-wider text-gray-600 bg-paper/40 hover:border-navy hover:text-navy cursor-pointer transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleMainImageUpload}
+                      className="hidden"
+                    />
+                    {uploadingMainImage ? "Uploading main image..." : "Upload main image"}
+                  </label>
+                  <label className="border border-dashed border-line rounded px-3 py-3 text-xs font-bold uppercase tracking-wider text-gray-600 bg-paper/40 hover:border-navy hover:text-navy cursor-pointer transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleGalleryUpload}
+                      className="hidden"
+                    />
+                    {uploadingGallery ? "Uploading gallery..." : "Upload gallery images"}
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">
+                      Main Image URL
+                    </label>
+                    <input
+                      required
+                      name="image"
+                      value={form.image}
+                      onChange={handleInputChange}
+                      className="w-full border border-line rounded px-3 py-2 text-xs bg-white text-ink focus:outline-none focus:border-navy"
+                      placeholder="https://res.cloudinary.com/..."
+                    />
+                  </div>
+
+                  <div className="border border-line rounded bg-paper/30 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">
+                      Gallery Preview
+                    </p>
+                    {form.images.length > 0 ? (
+                      <div className="grid grid-cols-3 gap-2">
+                        {mergeUniqueImages(form.image, form.images).map((img) => (
+                          <button
+                            type="button"
+                            key={img}
+                            onClick={() => handleRemoveImage(img)}
+                            className="group relative aspect-[3/4] overflow-hidden rounded border border-line"
+                          >
+                            <img src={img} alt="Gallery preview" className="w-full h-full object-cover" />
+                            <span className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-[9px] font-bold uppercase tracking-wider py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              Remove
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-gray-400">
+                        Upload at least one image to build the product gallery.
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div>

@@ -21,6 +21,7 @@ const productSchema = new mongoose.Schema(
     },
     price: { type: Number, required: true },
     mrp: { type: Number, required: true },
+    stock: { type: Number, required: true, default: 0 },
     tag: { type: String, enum: ["New", "Sale", ""], default: "" },
     colors: [{ type: String }],
     sizes: [{ type: String }],

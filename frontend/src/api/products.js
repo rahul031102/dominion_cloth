@@ -171,6 +171,12 @@ export const createProduct = (productData) =>
 export const updateProduct = (id, productData) =>
   api.put(`/products/${id}`, productData).then((r) => r.data);
 
+export const uploadProductImageApi = (file) => {
+  const formData = new FormData();
+  formData.append("image", file);
+  return api.post("/products/upload-image", formData).then((r) => r.data);
+};
+
 export const deleteProduct = (id) =>
   api.delete(`/products/${id}`).then((r) => r.data);
 

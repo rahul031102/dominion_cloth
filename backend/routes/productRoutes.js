@@ -7,6 +7,8 @@ import {
   deleteProduct,
   createProductReview,
 } from "../controllers/productController.js";
+import { upload } from "../middleware/uploadMiddleware.js";
+import { uploadProductImage } from "../controllers/uploadController.js";
 import { protect, admin } from "../config/authMiddleware.js";
 import { validateRequest, productAdminSchema } from "../middleware/validationMiddleware.js";
 
@@ -14,6 +16,7 @@ const router = express.Router();
 
 router.get("/", getProducts);
 router.get("/:id", getProductById);
+router.post("/upload-image", protect, admin, upload.single("image"), uploadProductImage);
 router.post("/:id/reviews", protect, createProductReview);
 
 // Admin protected endpoints

@@ -4,6 +4,7 @@ import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { placeOrder, verifyPayment, applyCouponApi } from "../api/products.js";
+import { getProductImage } from "../utils/images.js";
 
 export default function Checkout() {
   const { cart, subtotal, clearCart } = useCart();
@@ -362,7 +363,7 @@ export default function Checkout() {
           {cart.map((c) => (
             <div key={`${c.product._id}-${c.size}`} className="flex gap-3 bg-paper p-3 rounded border border-line shadow-sm">
               <img
-                src={c.product.image}
+                src={getProductImage(c.product)}
                 alt={c.product.name}
                 className="w-14 h-18 object-cover rounded bg-white border border-line"
               />

@@ -81,15 +81,21 @@ export const productAdminSchema = z.object({
     }),
     price: z.number().positive("Price must be a positive number"),
     mrp: z.number().positive("MRP must be a positive number"),
+    stock: z.number().int().nonnegative("Stock count cannot be negative"),
     tag: z.enum(["New", "Sale", ""]).optional(),
     image: z.string().url("Main product image must be a valid URL"),
+    images: z.array(z.string().url("Gallery image must be a valid URL")).optional(),
+    sizes: z.array(z.string().min(1)).min(1, "At least one size is required"),
+    colors: z.array(z.string().min(1)).min(1, "At least one color is required"),
     description: z.string().min(1, "Description is required"),
-    variants: z.array(
-      z.object({
-        size: z.string().min(1, "Size is required"),
-        color: z.string().min(1, "Color is required"),
-        stock: z.number().int().nonnegative("Stock count cannot be negative"),
-      })
-    ).min(1, "At least one size/color variant combination must be defined"),
+    variants: z
+      .array(
+        z.object({
+          size: z.string().min(1, "Size is required"),
+          color: z.string().min(1, "Color is required"),
+          stock: z.number().int().nonnegative("Stock count cannot be negative"),
+        })
+      )
+      .optional(),
   }),
 });

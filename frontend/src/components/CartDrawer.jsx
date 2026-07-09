@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
+import { getProductImage } from "../utils/images.js";
 
 export default function CartDrawer() {
   const { cart, changeQty, removeFromCart, subtotal, isOpen, setIsOpen } = useCart();
@@ -56,7 +57,7 @@ export default function CartDrawer() {
             cart.map((c) => (
               <div key={`${c.product._id}-${c.size}`} className="flex gap-4 border-b border-line pb-4 last:border-0 last:pb-0">
                 <img
-                  src={c.product.image}
+                  src={getProductImage(c.product)}
                   alt={c.product.name}
                   className="w-20 h-24 object-cover rounded bg-paper border border-line"
                 />

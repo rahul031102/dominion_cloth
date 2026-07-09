@@ -15,6 +15,15 @@ npm run seed                # loads sample products into MongoDB
 npm run dev                 # starts on http://localhost:5000
 ```
 
+Backend env vars you need for the full feature set:
+- `MONGO_URI`
+- `JWT_SECRET`
+- `JWT_REFRESH_SECRET`
+- `CLIENT_URL`
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
 ### 2. Frontend
 ```
 cd frontend
@@ -32,14 +41,14 @@ Open http://localhost:5173
 - Category filtering (Shirts, Polos, T-Shirts, Trousers, Jeans, New, Sale)
 - Cart (add/remove/qty) with React Context
 - Checkout form → saves order to MongoDB as "pending"
+- Admin dashboard with Cloudinary image uploads, gallery previews, and product CRUD
+- Product detail gallery, related items, wishlist, and stock-aware variant handling
 
 **Placeholder for the demo (wire up before going live):**
 - Payment: checkout currently just saves the order, no real charge.
   Swap in Razorpay: create an order-create + verify-signature route in
   `controllers/orderController.js`, then trigger Razorpay's checkout.js
   modal from `Checkout.jsx` on submit.
-- Admin dashboard: not built yet — products are added via `npm run seed`
-  or directly through the API/DB for now.
 - Auth: no login/signup — guest checkout only.
 
 ## Deploying (same pattern as your other MERN projects)

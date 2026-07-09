@@ -6,6 +6,7 @@ import { useToast } from "../context/ToastContext.jsx";
 import { useWishlist } from "../context/WishlistContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import ProductCard from "../components/ProductCard.jsx";
+import { getProductImages } from "../utils/images.js";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -50,6 +51,7 @@ export default function ProductDetail() {
   const [selectedColor, setSelectedColor] = useState(null);
   const [activeImage, setActiveImage] = useState("");
   const [zoomStyle, setZoomStyle] = useState({ display: "none" });
+  const galleryImages = product ? getProductImages(product) : [];
 
   useEffect(() => {
     setLoading(true);
@@ -63,7 +65,7 @@ export default function ProductDetail() {
         setProduct(p);
         setSelectedColor(p.colors?.[0] || null);
         setSelectedSize(p.sizes?.[0] || null);
-        setActiveImage(p.image);
+        setActiveImage(p.image || p.images?.[0] || "");
         setLoading(false);
 
         fetchProducts(p.category)
@@ -188,7 +190,7 @@ export default function ProductDetail() {
       <div className="grid md:grid-cols-12 gap-8 md:gap-12">
         {/* Left Column: Image Gallery Thumbnails */}
         <div className="md:col-span-1 flex md:flex-col gap-2 order-2 md:order-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0">
-          {(product.images || [product.image]).map((img, idx) => {
+          {galleryImages.map((img, idx) => {
             const isSelected = img === activeImage;
             return (
               <button
@@ -396,6 +398,18 @@ export default function ProductDetail() {
         {/* Left Column: Review Summary & Write Form */}
         <div className="md:col-span-5 space-y-8">
           <div>
+
+          <div className="grid grid-cols-3 gap-2.5 mb-6">
+            <div className="bg-white border border-line rounded p-3 text-[10px] font-bold uppercase tracking-wider text-gray-600">
+              Secure checkout
+            </div>
+            <div className="bg-white border border-line rounded p-3 text-[10px] font-bold uppercase tracking-wider text-gray-600">
+              Easy returns
+            </div>
+            <div className="bg-white border border-line rounded p-3 text-[10px] font-bold uppercase tracking-wider text-gray-600">
+              Fast dispatch
+            </div>
+          </div>
             <h2 className="text-lg font-bold uppercase tracking-wide border-l-4 border-navy pl-3 text-ink mb-4">
               Ratings & Reviews
             </h2>
