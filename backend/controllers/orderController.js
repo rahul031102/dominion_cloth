@@ -15,6 +15,30 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
   console.log("Razorpay credentials missing. Running checkout in Simulation Mode.");
 }
 
+// Shared helper to restore reserved stock counts for a failed/cancelled order
+export const restoreOrderStock = async (order) => {
+  for (const item of order.items) {
+    if (item.product) {
+      await Product.updateOne(
+        {
+          _id: item.product,
+          variants: {
+            $elemMatch: {
+              size: item.size,
+              color: item.color
+            }
+          }
+        },
+        {
+          $inc: {
+            "variants.$.stock": item.qty
+          }
+        }
+      );
+    }
+  }
+};
+
 // Create order record and generate Razorpay session
 export const placeOrder = async (req, res) => {
   try {
@@ -23,20 +47,109 @@ export const placeOrder = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
+    // 1. Re-calculate subtotal and build order items list with database-verified product prices
+    const orderItems = [];
+    let calculatedSubtotal = 0;
+    
+    for (const item of items) {
+      const product = await Product.findById(item.product);
+      if (!product) {
+        return res.status(400).json({ message: `Product not found: ${item.name || item.product}` });
+      }
+
+      // Check variant existence and gather size/color combo specs
+      const matchedVariant = product.variants?.find(
+        (v) => v.size === item.size && (!item.color || v.color === item.color)
+      );
+
+      if (!matchedVariant) {
+        return res.status(400).json({
+          message: `Option combo not available for product "${product.name}" (${item.size}${item.color ? ` - ${item.color}` : ""})`
+        });
+      }
+
+      // Construct verified item entry using the database price
+      orderItems.push({
+        product: product._id,
+        name: product.name,
+        price: product.price,
+        qty: item.qty,
+        size: item.size,
+        color: item.color || "",
+      });
+
+      calculatedSubtotal += product.price * item.qty;
+    }
+
+    // Sanity comparison logging
+    if (Math.round(calculatedSubtotal) !== Math.round(subtotal)) {
+      console.warn(`[SECURITY ALERT] Price tampering detected! Client sent subtotal of ₹${subtotal}, but server calculated ₹${calculatedSubtotal}. Overriding with server calculation.`);
+    }
+
+    // 2. Perform atomic stock reservation
+    const reservedItems = [];
+    for (const item of orderItems) {
+      const result = await Product.updateOne(
+        {
+          _id: item.product,
+          variants: {
+            $elemMatch: {
+              size: item.size,
+              color: item.color,
+              stock: { $gte: item.qty }
+            }
+          }
+        },
+        {
+          $inc: {
+            "variants.$.stock": -item.qty
+          }
+        }
+      );
+
+      if (result.modifiedCount === 0) {
+        // Rollback already reserved stock elements
+        for (const rev of reservedItems) {
+          await Product.updateOne(
+            {
+              _id: rev.product,
+              variants: {
+                $elemMatch: {
+                  size: rev.size,
+                  color: rev.color
+                }
+              }
+            },
+            {
+              $inc: {
+                "variants.$.stock": rev.qty
+              }
+            }
+          );
+        }
+
+        return res.status(400).json({
+          message: `Insufficient stock for item: ${item.name} (${item.size}${item.color ? ` - ${item.color}` : ""}). Please adjust quantities.`
+        });
+      }
+
+      reservedItems.push(item);
+    }
+
     // Create the order locally as "pending"
     const order = await Order.create({
       user: req.user ? req.user._id : null,
       customerName,
       phone,
       address,
-      items,
-      subtotal,
+      items: orderItems,
+      subtotal: calculatedSubtotal,
       paymentStatus: "pending",
     });
 
     if (razorpayInstance) {
       const options = {
-        amount: Math.round(subtotal * 100), // amount in paise
+        amount: Math.round(calculatedSubtotal * 100), // amount in paise
         currency: "INR",
         receipt: `receipt_order_${order._id}`,
       };
@@ -112,8 +225,12 @@ export const verifyPayment = async (req, res) => {
       await order.save();
       res.json({ message: "Payment verified successfully", order });
     } else {
+      const wasPending = order.paymentStatus === "pending";
       order.paymentStatus = "failed";
       await order.save();
+      if (wasPending) {
+        await restoreOrderStock(order);
+      }
       res.status(400).json({ message: "Invalid payment signature" });
     }
   } catch (err) {
@@ -167,8 +284,15 @@ export const updateOrderStatus = async (req, res) => {
       });
     }
 
+    const originalStatus = order.status;
     order.status = status;
     await order.save();
+
+    // Revert stock if transition went to Cancelled
+    if (status === "Cancelled" && originalStatus !== "Cancelled") {
+      await restoreOrderStock(order);
+    }
+
     res.json(order);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -189,25 +313,8 @@ export const cancelOrder = async (req, res) => {
       });
     }
 
-    // Restore product stock counts
-    for (const item of order.items) {
-      if (item.product) {
-        const product = await Product.findById(item.product);
-        if (product) {
-          // Adjust variant stock
-          const variant = product.variants?.find(
-            (v) => v.size === item.size && (!item.color || v.color === item.color)
-          );
-          if (variant) {
-            variant.stock += item.qty;
-          }
-          if (product.stock !== undefined) {
-            product.stock += item.qty;
-          }
-          await product.save();
-        }
-      }
-    }
+    // Restore product stock counts via helper
+    await restoreOrderStock(order);
 
     order.status = "Cancelled";
     await order.save();

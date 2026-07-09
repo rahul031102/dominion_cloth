@@ -67,6 +67,7 @@ export default function Checkout() {
           price: c.product.price,
           qty: c.qty,
           size: c.size,
+          color: c.color || "",
         })),
         subtotal,
       };
