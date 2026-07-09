@@ -14,9 +14,15 @@ export default function ProductCard({ product }) {
   const handleWishlistClick = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const success = await toggleWishlist(product._id);
-    if (!success) {
-      showToast("Please sign in to manage wishlist.");
+    const res = await toggleWishlist(product._id);
+    if (!res.success) {
+      if (res.error === "auth") {
+        showToast("Please sign in to manage wishlist.");
+      } else {
+        showToast("Connection error. Could not update wishlist.");
+      }
+    } else {
+      showToast(res.action === "added" ? "Added to wishlist" : "Removed from wishlist");
     }
   };
 

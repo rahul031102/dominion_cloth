@@ -33,7 +33,7 @@ export const WishlistProvider = ({ children }) => {
 
   const toggleWishlist = async (productId) => {
     if (!user) {
-      return false; // Suggest redirection to login
+      return { success: false, error: "auth" };
     }
 
     const wasWished = wishlist.some((item) => (item._id || item) === productId);
@@ -48,12 +48,12 @@ export const WishlistProvider = ({ children }) => {
     try {
       const data = await toggleWishlistApi(productId);
       setWishlist(data);
-      return true;
+      return { success: true, action: wasWished ? "removed" : "added" };
     } catch (err) {
       console.error("Error toggling wishlist:", err);
       // Rollback on error
       setWishlist(originalWishlist);
-      return false;
+      return { success: false, error: "api" };
     }
   };
 

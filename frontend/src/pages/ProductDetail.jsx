@@ -67,11 +67,15 @@ export default function ProductDetail() {
   };
 
   const handleWishlistToggle = async () => {
-    const success = await toggleWishlist(product._id);
-    if (!success) {
-      showToast("Please sign in to add items to your wishlist.");
+    const res = await toggleWishlist(product._id);
+    if (!res.success) {
+      if (res.error === "auth") {
+        showToast("Please sign in to add items to your wishlist.");
+      } else {
+        showToast("Connection error. Could not update wishlist.");
+      }
     } else {
-      showToast(inWishlist(product._id) ? "Removed from wishlist" : "Added to wishlist");
+      showToast(res.action === "added" ? "Added to wishlist" : "Removed from wishlist");
     }
   };
 
