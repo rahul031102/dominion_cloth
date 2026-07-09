@@ -183,8 +183,8 @@ export const deleteProduct = (id) =>
 export const fetchOrders = () =>
   api.get("/orders").then((r) => r.data);
 
-export const updateOrderStatus = (id, status) =>
-  api.put(`/orders/${id}/status`, { status }).then((r) => r.data);
+export const updateOrderStatus = (id, status, trackingNumber = "") =>
+  api.put(`/orders/${id}/status`, { status, trackingNumber }).then((r) => r.data);
 
 // Coupon endpoints
 export const applyCouponApi = (code, subtotal) =>

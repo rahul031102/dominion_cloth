@@ -75,6 +75,7 @@ const sendOrderStatusEmail = async (orderId, subjectLine, bodyHeading, customMes
           <p style="margin: 0; font-size: 14px;"><strong>Address:</strong> ${order.address}</p>
           <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Payment Method:</strong> ${order.paymentMethod}</p>
           <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Current Status:</strong> <span style="text-transform: uppercase; font-weight: bold; color: #1B2A4A;">${order.status}</span></p>
+          ${order.trackingNumber ? `<p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Tracking Number:</strong> <span style="font-family: monospace;">${order.trackingNumber}</span></p>` : ""}
         </div>
         
         <p style="margin-top: 20px; text-align: center; font-size: 12px; color: #666;">
@@ -413,21 +414,31 @@ const ALLOWED_TRANSITIONS = {
 // Admin update order delivery/processing status with state machine verification
 export const updateOrderStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, trackingNumber = "" } = req.body;
     const order = await Order.findById(req.params.id);
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    const validNextStates = ALLOWED_TRANSITIONS[order.status] || [];
-    if (!validNextStates.includes(status)) {
-      return res.status(400).json({
-        message: `Invalid transition from "${order.status}" to "${status}". Allowed: ${validNextStates.join(", ") || "None"}`,
-      });
+    const nextStatus = status || order.status;
+    const normalizedTrackingNumber = typeof trackingNumber === "string" ? trackingNumber.trim() : "";
+
+    if (nextStatus !== order.status) {
+      const validNextStates = ALLOWED_TRANSITIONS[order.status] || [];
+      if (!validNextStates.includes(nextStatus)) {
+        return res.status(400).json({
+          message: `Invalid transition from "${order.status}" to "${nextStatus}". Allowed: ${validNextStates.join(", ") || "None"}`,
+        });
+      }
+    } else if (!normalizedTrackingNumber) {
+      return res.json(order);
     }
 
     const originalStatus = order.status;
-    order.status = status;
+    order.status = nextStatus;
+    if (normalizedTrackingNumber) {
+      order.trackingNumber = normalizedTrackingNumber;
+    }
     await order.save();
 
     // Revert stock if transition went to Cancelled
@@ -438,9 +449,9 @@ export const updateOrderStatus = async (req, res) => {
     // Trigger status update email
     await sendOrderStatusEmail(
       order._id,
-      `Order Status Update: ${status} - Dominion Clothing`,
-      `Order Status Updated to ${status}`,
-      `Good news! The status of your order #${order._id} has been updated to "${status}".`
+      `Order Status Update: ${nextStatus} - Dominion Clothing`,
+      `Order Status Updated to ${nextStatus}`,
+      `Good news! The status of your order #${order._id} has been updated to "${nextStatus}".${order.trackingNumber ? ` Tracking number: ${order.trackingNumber}.` : ""}`
     );
 
     res.json(order);

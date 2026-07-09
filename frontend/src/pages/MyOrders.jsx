@@ -227,6 +227,14 @@ export default function MyOrders() {
                     <p className="text-gray-500 font-semibold mb-2">{o.phone}</p>
                     <p className="text-gray-400 leading-relaxed font-sans text-xs italic">{o.address}</p>
                   </div>
+                  {o.trackingNumber && (
+                    <div className="bg-white border border-line rounded p-3">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">
+                        Tracking Number
+                      </span>
+                      <p className="font-mono text-xs font-bold text-navy break-all">{o.trackingNumber}</p>
+                    </div>
+                  )}
                 </div>
 
               </div>

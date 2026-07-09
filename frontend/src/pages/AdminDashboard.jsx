@@ -60,6 +60,7 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [shipmentDrafts, setShipmentDrafts] = useState({});
 
   // Product Form Modal state
   const [showModal, setShowModal] = useState(false);
@@ -93,6 +94,19 @@ export default function AdminDashboard() {
       }
     }
   }, [user, authLoading]);
+
+  useEffect(() => {
+    setShipmentDrafts((prev) => {
+      const next = {};
+      orders.forEach((order) => {
+        next[order._id] = {
+          status: prev[order._id]?.status || order.status || "Processing",
+          trackingNumber: prev[order._id]?.trackingNumber ?? order.trackingNumber ?? "",
+        };
+      });
+      return next;
+    });
+  }, [orders]);
 
   const loadDashboardData = async () => {
     setLoadingData(true);
@@ -269,10 +283,21 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleStatusChange = async (orderId, nextStatus) => {
+  const handleShipmentDraftChange = (orderId, field, value) => {
+    setShipmentDrafts((prev) => ({
+      ...prev,
+      [orderId]: {
+        ...(prev[orderId] || {}),
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleStatusChange = async (orderId) => {
     try {
-      await updateOrderStatus(orderId, nextStatus);
-      showToast(`Order status updated to "${nextStatus}"`);
+      const draft = shipmentDrafts[orderId] || {};
+      await updateOrderStatus(orderId, draft.status || "Processing", draft.trackingNumber || "");
+      showToast(`Shipment details updated.`);
       loadDashboardData();
     } catch (err) {
       showToast("Failed to update status.");
@@ -512,9 +537,9 @@ export default function AdminDashboard() {
                         Order Status
                       </span>
                       <select
-                        value={o.status || "Processing"}
+                        value={shipmentDrafts[o._id]?.status || o.status || "Processing"}
                         disabled={!(ALLOWED_TRANSITIONS[o.status] && ALLOWED_TRANSITIONS[o.status].length > 0)}
-                        onChange={(e) => handleStatusChange(o._id, e.target.value)}
+                        onChange={(e) => handleShipmentDraftChange(o._id, "status", e.target.value)}
                         className="text-xs font-bold bg-paper border border-line rounded px-2.5 py-1 text-ink focus:outline-none focus:border-navy uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         <option value={o.status} disabled>{o.status}</option>
@@ -524,6 +549,24 @@ export default function AdminDashboard() {
                           </option>
                         ))}
                       </select>
+                      <div className="mt-2 max-w-[220px] sm:max-w-[260px]">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1 text-right">
+                          Tracking Number
+                        </label>
+                        <input
+                          type="text"
+                          value={shipmentDrafts[o._id]?.trackingNumber || ""}
+                          onChange={(e) => handleShipmentDraftChange(o._id, "trackingNumber", e.target.value)}
+                          placeholder="AWB / courier tracking"
+                          className="w-full text-xs font-medium bg-paper border border-line rounded px-2.5 py-1.5 text-ink focus:outline-none focus:border-navy uppercase tracking-wider"
+                        />
+                      </div>
+                      <button
+                        onClick={() => handleStatusChange(o._id)}
+                        className="mt-2 w-full text-xs font-bold bg-navy text-white px-3 py-2 rounded shadow hover:opacity-90 transition-all uppercase tracking-wider"
+                      >
+                        Save Shipment
+                      </button>
                     </div>
                   </div>
                 </div>

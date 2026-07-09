@@ -34,6 +34,7 @@ const orderSchema = new mongoose.Schema(
     razorpayOrderId: { type: String, default: "" },
     razorpayPaymentId: { type: String, default: "" },
     razorpaySignature: { type: String, default: "" },
+    trackingNumber: { type: String, default: "" },
     status: {
       type: String,
       enum: [
