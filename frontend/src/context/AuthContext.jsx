@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { loginUser, signupUser } from "../api/products.js";
+import { loginUser, signupUser, logoutUserApi } from "../api/products.js";
 
 const AuthContext = createContext();
 
@@ -28,12 +28,16 @@ export function AuthProvider({ children }) {
 
   const signup = async (name, email, password) => {
     const data = await signupUser(name, email, password);
-    setUser(data);
-    localStorage.setItem("userInfo", JSON.stringify(data));
+    // Don't auto-log in since they need email verification first!
     return data;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await logoutUserApi();
+    } catch (err) {
+      console.error("Logout API failed: ", err);
+    }
     setUser(null);
     localStorage.removeItem("userInfo");
   };

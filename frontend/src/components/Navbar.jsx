@@ -169,6 +169,13 @@ export default function Navbar() {
                     Account: {user.name}
                   </div>
                   <Link
+                    to="/profile"
+                    onClick={() => setShowProfileDropdown(false)}
+                    className="block px-4 py-2 text-ink hover:bg-[#FAFAF8] hover:text-navy transition-colors uppercase tracking-wide font-bold"
+                  >
+                    My Profile
+                  </Link>
+                  <Link
                     to="/orders"
                     onClick={() => setShowProfileDropdown(false)}
                     className="block px-4 py-2 text-ink hover:bg-[#FAFAF8] hover:text-navy transition-colors uppercase tracking-wide font-bold"
@@ -308,6 +315,13 @@ export default function Navbar() {
               {user ? (
                 <>
                   <div className="text-xs font-bold text-navy uppercase mb-1">Hi, {user.name.split(" ")[0]}</div>
+                  <Link
+                    to="/profile"
+                    onClick={() => setMenuOpen(false)}
+                    className="text-[10px] text-gray-700 font-extrabold uppercase tracking-wider hover:text-navy transition-colors py-1"
+                  >
+                    My Profile
+                  </Link>
                   <Link
                     to="/orders"
                     onClick={() => setMenuOpen(false)}

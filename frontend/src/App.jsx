@@ -11,6 +11,10 @@ import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import MyOrders from "./pages/MyOrders.jsx";
+import Profile from "./pages/Profile.jsx";
+import VerifyEmail from "./pages/VerifyEmail.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
 
 export default function App() {
   const [appLoading, setAppLoading] = useState(true);
@@ -59,6 +63,10 @@ export default function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/orders" element={<MyOrders />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </main>
       <Footer />
