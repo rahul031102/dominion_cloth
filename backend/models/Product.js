@@ -26,7 +26,9 @@ const productSchema = new mongoose.Schema(
     colors: [{ type: String }],
     sizes: [{ type: String }],
     image: { type: String, required: true },
+    imagePublicId: { type: String, default: "" },
     images: [{ type: String }], // Array for multiple image galleries
+    imagePublicIds: [{ type: String }],
     description: { type: String, required: true },
     variants: [
       {

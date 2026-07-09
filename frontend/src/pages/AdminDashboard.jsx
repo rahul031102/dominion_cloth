@@ -31,6 +31,26 @@ const mergeUniqueImages = (mainImage, images = []) => {
   return [...new Set([mainImage, ...images].filter(Boolean))];
 };
 
+const normalizeImageEntries = (images = [], publicIds = []) => {
+  const entries = [];
+
+  images.forEach((image, index) => {
+    const url = typeof image === "string" ? image : image?.url || image?.src || image?.image || "";
+    if (!url) return;
+
+    const publicId =
+      (typeof image === "object" && (image.publicId || image.public_id || "")) ||
+      publicIds[index] ||
+      "";
+
+    if (!entries.some((entry) => entry.url === url)) {
+      entries.push({ url, publicId });
+    }
+  });
+
+  return entries;
+};
+
 export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const { showToast } = useToast();
@@ -54,6 +74,7 @@ export default function AdminDashboard() {
     colors: "",
     sizes: [],
     image: "",
+    imagePublicId: "",
     description: "",
     stock: "",
     images: [],
@@ -113,6 +134,7 @@ export default function AdminDashboard() {
       colors: "",
       sizes: ["S", "M", "L"],
       image: "",
+      imagePublicId: "",
       description: "",
       stock: "10",
       images: [],
@@ -132,9 +154,13 @@ export default function AdminDashboard() {
       colors: prod.colors ? prod.colors.join(", ") : "",
       sizes: prod.sizes || [],
       image: prod.image,
+      imagePublicId: prod.imagePublicId || prod.imagePublicIds?.[0] || "",
       description: prod.description || "",
       stock: prod.stock !== undefined && prod.stock !== null ? prod.stock.toString() : "10",
-      images: prod.images?.length ? prod.images : prod.image ? [prod.image] : [],
+      images: normalizeImageEntries(
+        prod.images?.length ? prod.images : prod.image ? [prod.image] : [],
+        prod.imagePublicIds?.length ? prod.imagePublicIds : prod.imagePublicId ? [prod.imagePublicId] : []
+      ),
     });
     setShowModal(true);
   };
@@ -145,11 +171,15 @@ export default function AdminDashboard() {
 
     setUploadingMainImage(true);
     try {
-      const { url } = await uploadProductImageApi(file);
+      const { url, publicId } = await uploadProductImageApi(file);
       setForm((prev) => ({
         ...prev,
         image: url,
-        images: mergeUniqueImages(url, prev.images),
+        imagePublicId: publicId,
+        images: normalizeImageEntries(
+          [{ url, publicId }, ...prev.images],
+          []
+        ),
       }));
       showToast("Main image uploaded to Cloudinary.");
     } catch (err) {
@@ -167,13 +197,13 @@ export default function AdminDashboard() {
     setUploadingGallery(true);
     try {
       const uploads = await Promise.all(files.map((file) => uploadProductImageApi(file)));
-      const urls = uploads.map((item) => item.url);
       setForm((prev) => ({
         ...prev,
-        image: prev.image || urls[0],
-        images: mergeUniqueImages(prev.image || urls[0], [...prev.images, ...urls]),
+        image: prev.image || uploads[0].url,
+        imagePublicId: prev.imagePublicId || uploads[0].publicId,
+        images: normalizeImageEntries([...prev.images, ...uploads]),
       }));
-      showToast(`${urls.length} gallery image(s) uploaded.`);
+      showToast(`${uploads.length} gallery image(s) uploaded.`);
     } catch (err) {
       showToast(err.response?.data?.message || "Failed to upload gallery images.");
     } finally {
@@ -184,12 +214,13 @@ export default function AdminDashboard() {
 
   const handleRemoveImage = (imageUrl) => {
     setForm((prev) => {
-      const nextImages = prev.images.filter((url) => url !== imageUrl);
-      const nextMainImage = prev.image === imageUrl ? nextImages[0] || "" : prev.image;
+      const nextImages = prev.images.filter((item) => item.url !== imageUrl);
+      const nextMain = prev.image === imageUrl ? nextImages[0] || null : prev.images[0] || null;
       return {
         ...prev,
-        image: nextMainImage,
-        images: nextMainImage ? mergeUniqueImages(nextMainImage, nextImages) : nextImages,
+        image: nextMain?.url || "",
+        imagePublicId: nextMain?.publicId || "",
+        images: nextImages,
       };
     });
   };
@@ -197,14 +228,16 @@ export default function AdminDashboard() {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     try {
-      const normalizedImages = mergeUniqueImages(form.image, form.images);
+      const normalizedImages = normalizeImageEntries(form.images.length ? form.images : form.image ? [{ url: form.image, publicId: form.imagePublicId }] : []);
       const payload = {
         ...form,
         price: Number(form.price),
         mrp: Number(form.mrp || form.price),
         stock: form.stock === "" ? 10 : Number(form.stock),
-        image: form.image || normalizedImages[0] || "",
-        images: normalizedImages,
+        image: normalizedImages[0]?.url || form.image || "",
+        imagePublicId: normalizedImages[0]?.publicId || form.imagePublicId || "",
+        images: normalizedImages.map((item) => item.url),
+        imagePublicIds: normalizedImages.map((item) => item.publicId).filter(Boolean),
         colors: form.colors
           ? form.colors.split(",").map((c) => c.trim()).filter(Boolean)
           : [],
@@ -714,14 +747,14 @@ export default function AdminDashboard() {
                     </p>
                     {form.images.length > 0 ? (
                       <div className="grid grid-cols-3 gap-2">
-                        {mergeUniqueImages(form.image, form.images).map((img) => (
+                        {form.images.map((img) => (
                           <button
                             type="button"
-                            key={img}
-                            onClick={() => handleRemoveImage(img)}
+                            key={img.url}
+                            onClick={() => handleRemoveImage(img.url)}
                             className="group relative aspect-[3/4] overflow-hidden rounded border border-line"
                           >
-                            <img src={img} alt="Gallery preview" className="w-full h-full object-cover" />
+                            <img src={img.url} alt="Gallery preview" className="w-full h-full object-cover" />
                             <span className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-[9px] font-bold uppercase tracking-wider py-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               Remove
                             </span>

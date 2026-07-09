@@ -1,4 +1,5 @@
 import Product from "../models/Product.js";
+import { configureCloudinary } from "../config/cloudinary.js";
 
 const normalizeList = (value) => {
   if (Array.isArray(value)) {
@@ -10,6 +11,154 @@ const normalizeList = (value) => {
   }
 
   return [];
+};
+
+const extractPublicIdFromUrl = (url) => {
+  if (!url || typeof url !== "string") {
+    return "";
+  }
+
+  if (!url.includes("cloudinary.com")) {
+    return "";
+  }
+
+  try {
+    const parsed = new URL(url);
+    const pathParts = parsed.pathname.split("/").filter(Boolean);
+    const uploadIndex = pathParts.indexOf("upload");
+
+    if (uploadIndex === -1 || uploadIndex >= pathParts.length - 1) {
+      return "";
+    }
+
+    const publicIdParts = pathParts.slice(uploadIndex + 1).filter((part) => !/^v\d+$/.test(part));
+    if (publicIdParts.length === 0) {
+      return "";
+    }
+
+    const lastPart = publicIdParts.pop();
+    publicIdParts.push(lastPart.replace(/\.[^.]+$/, ""));
+    return publicIdParts.join("/");
+  } catch {
+    return "";
+  }
+};
+
+const normalizeImageRecords = (data) => {
+  const images = Array.isArray(data.images)
+    ? data.images.map((image) => {
+        if (typeof image === "string") {
+          return { url: image, publicId: "" };
+        }
+
+        if (image && typeof image === "object") {
+          return {
+            url: image.url || image.src || image.image || "",
+            publicId: image.publicId || image.public_id || "",
+          };
+        }
+
+        return { url: "", publicId: "" };
+      })
+    : [];
+
+  const publicIds = normalizeList(data.imagePublicIds);
+  const mainUrl = typeof data.image === "string" ? data.image.trim() : "";
+  const mainPublicId = typeof data.imagePublicId === "string" ? data.imagePublicId.trim() : "";
+
+  const mergedRecords = images.length > 0 ? images : [];
+
+  if (mainUrl) {
+    if (mergedRecords.length === 0) {
+      mergedRecords.push({ url: mainUrl, publicId: mainPublicId });
+    } else if (mergedRecords[0].url !== mainUrl) {
+      mergedRecords.unshift({ url: mainUrl, publicId: mainPublicId });
+    } else if (!mergedRecords[0].publicId && mainPublicId) {
+      mergedRecords[0].publicId = mainPublicId;
+    }
+  }
+
+  mergedRecords.forEach((record, index) => {
+    if (!record.publicId) {
+      record.publicId = publicIds[index] || extractPublicIdFromUrl(record.url) || "";
+    }
+    if (!record.url) {
+      record.url = data.image || "";
+    }
+  });
+
+  const filteredRecords = mergedRecords.filter((record) => record.url);
+
+  data.images = filteredRecords.map((record) => record.url);
+  data.imagePublicIds = filteredRecords.map((record) => record.publicId).filter(Boolean);
+  data.image = data.images[0] || data.image || "";
+  data.imagePublicId = filteredRecords[0]?.publicId || mainPublicId || extractPublicIdFromUrl(data.image) || "";
+
+  return data;
+};
+
+const collectPublicIds = (productLike) => {
+  const publicIds = new Set();
+
+  if (productLike?.imagePublicId) {
+    publicIds.add(productLike.imagePublicId);
+  }
+
+  if (Array.isArray(productLike?.imagePublicIds)) {
+    productLike.imagePublicIds.filter(Boolean).forEach((publicId) => publicIds.add(publicId));
+  }
+
+  if (Array.isArray(productLike?.images)) {
+    productLike.images.forEach((image, index) => {
+      if (image && typeof image === "object") {
+        if (image.publicId) {
+          publicIds.add(image.publicId);
+        } else if (image.public_id) {
+          publicIds.add(image.public_id);
+        } else if (image.url) {
+          const extracted = extractPublicIdFromUrl(image.url);
+          if (extracted) publicIds.add(extracted);
+        }
+        return;
+      }
+
+      const explicitPublicId = Array.isArray(productLike?.imagePublicIds) ? productLike.imagePublicIds[index] : "";
+      if (explicitPublicId) {
+        publicIds.add(explicitPublicId);
+        return;
+      }
+
+      const extracted = extractPublicIdFromUrl(image || productLike?.image || "");
+      if (extracted) {
+        publicIds.add(extracted);
+      }
+    });
+  } else if (productLike?.image) {
+    const extracted = extractPublicIdFromUrl(productLike.image);
+    if (extracted) {
+      publicIds.add(extracted);
+    }
+  }
+
+  return [...publicIds].filter(Boolean);
+};
+
+const cleanupCloudinaryAssets = async (publicIds) => {
+  const uniquePublicIds = [...new Set(publicIds.filter(Boolean))];
+  if (uniquePublicIds.length === 0) {
+    return;
+  }
+
+  try {
+    const cloudinary = configureCloudinary();
+    await Promise.allSettled(
+      uniquePublicIds.map((publicId) =>
+        cloudinary.uploader.destroy(publicId, { invalidate: true })
+      )
+    );
+  } catch (error) {
+    console.warn("Cloudinary cleanup skipped:", error.message);
+  }
 };
 
 const buildVariants = (data) => {
@@ -181,13 +330,7 @@ const syncProductFields = (data) => {
     data.stock = Number(data.stock);
   }
 
-  data.images = normalizeList(data.images);
-  if (data.image) {
-    data.images = [data.image, ...data.images.filter((url) => url !== data.image)];
-  }
-  if (!data.image && data.images.length > 0) {
-    data.image = data.images[0];
-  }
+  data = normalizeImageRecords(data);
 
   return buildVariants(data);
 };
@@ -206,12 +349,21 @@ export const createProduct = async (req, res) => {
 // Admin update product
 export const updateProduct = async (req, res) => {
   try {
+    const existingProduct = await Product.findById(req.params.id);
+    if (!existingProduct) return res.status(404).json({ message: "Product not found" });
+
     const payload = syncProductFields(req.body);
+    const previousPublicIds = collectPublicIds(existingProduct);
+    const nextPublicIds = collectPublicIds(payload);
+    const removedPublicIds = previousPublicIds.filter((publicId) => !nextPublicIds.includes(publicId));
+
     const product = await Product.findByIdAndUpdate(req.params.id, payload, {
       new: true,
       runValidators: true,
     });
-    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    await cleanupCloudinaryAssets(removedPublicIds);
+
     res.json(product);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -221,8 +373,12 @@ export const updateProduct = async (req, res) => {
 // Admin delete product
 export const deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
+    const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: "Product not found" });
+
+    await Product.deleteOne({ _id: req.params.id });
+    await cleanupCloudinaryAssets(collectPublicIds(product));
+
     res.json({ message: "Product deleted" });
   } catch (err) {
     res.status(500).json({ message: err.message });
