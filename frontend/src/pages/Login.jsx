@@ -64,6 +64,14 @@ export default function Login() {
             className="w-full border border-line rounded px-4 py-3 text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-medium"
             placeholder="••••••••"
           />
+          <div className="mt-2 text-right">
+            <Link
+              to="/forgot-password"
+              className="text-[11px] font-bold uppercase tracking-wide text-navy hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
         </div>
 
         <button

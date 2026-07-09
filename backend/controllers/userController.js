@@ -44,7 +44,27 @@ export const signupUser = async (req, res) => {
       verificationTokenExpires,
     });
 
+    const hasSMTPConfig =
+      process.env.SMTP_HOST &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASS &&
+      !process.env.SMTP_HOST.includes("yourprovider") &&
+      !process.env.SMTP_USER.includes("your-smtp-user") &&
+      !process.env.SMTP_PASS.includes("your-smtp-password");
+
+    if (!hasSMTPConfig) {
+      user.isVerified = true;
+      user.verificationToken = undefined;
+      user.verificationTokenExpires = undefined;
+    }
+
     await user.save();
+
+    if (!hasSMTPConfig) {
+      return res.status(201).json({
+        message: "Registration successful! You can log in right away in local mode.",
+      });
+    }
 
     const verificationLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/verify-email?token=${verificationToken}`;
     const emailHtml = `
@@ -71,8 +91,12 @@ export const signupUser = async (req, res) => {
       return res.status(201).json({ message: "Registration successful! Please verify your email to log in." });
     } catch (mailErr) {
       console.error("Mail send error during signup:", mailErr);
+      user.isVerified = true;
+      user.verificationToken = undefined;
+      user.verificationTokenExpires = undefined;
+      await user.save();
       return res.status(201).json({
-        message: "Registration successful, but verification email failed to send. Please contact support.",
+        message: "Registration successful! You can log in right away because email verification is unavailable in this setup.",
       });
     }
   } catch (error) {

@@ -26,7 +26,7 @@ export default function ForgotPassword() {
   return (
     <section className="max-w-md mx-auto px-6 py-16 bg-white border border-line rounded shadow-sm mt-16 text-ink page-enter font-body">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold uppercase tracking-wider text-navy">Reset Password</h1>
+        <h1 className="text-2xl font-bold uppercase tracking-wider text-navy">Forgot Password</h1>
         <p className="text-xs text-gray-500 mt-2.5 uppercase tracking-widest font-semibold">
           Get a recovery link sent to your inbox
         </p>
