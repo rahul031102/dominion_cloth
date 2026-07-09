@@ -17,6 +17,7 @@ export default function Navbar() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [searchVal, setSearchVal] = useState("");
+  const isAdmin = Boolean(user?.isAdmin);
 
   // Sync search input with URL query param
   useEffect(() => {
@@ -134,7 +135,7 @@ export default function Navbar() {
           <div className="flex items-center gap-5 md:gap-6">
             
             {/* Admin Console Link (desktop shortcut) */}
-            {user && user.isAdmin && (
+            {isAdmin && (
               <Link 
                 to="/admin" 
                 className="hidden lg:flex items-center gap-1 bg-[#1B2A4A]/10 border border-[#1B2A4A]/25 text-navy font-extrabold text-[10px] uppercase px-3 py-1.5 rounded-sm tracking-wider hover:bg-navy hover:text-white transition-all shadow-sm"
@@ -191,7 +192,7 @@ export default function Navbar() {
                   >
                     My Wishlist
                   </Link>
-                  {user.isAdmin && (
+                  {isAdmin && (
                     <Link
                       to="/admin"
                       onClick={() => setShowProfileDropdown(false)}

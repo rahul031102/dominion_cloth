@@ -3,20 +3,39 @@ import { loginUser, signupUser, logoutUserApi } from "../api/products.js";
 
 const AuthContext = createContext();
 
+const getStoredUser = () => {
+  const storedUser = localStorage.getItem("userInfo");
+  if (!storedUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(storedUser);
+  } catch (err) {
+    localStorage.removeItem("userInfo");
+    return null;
+  }
+};
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(getStoredUser);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("userInfo");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (err) {
-        localStorage.removeItem("userInfo");
-      }
-    }
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      if (event.key !== "userInfo") {
+        return;
+      }
+
+      setUser(getStoredUser());
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   const login = async (email, password) => {
