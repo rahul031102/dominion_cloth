@@ -29,10 +29,10 @@ export default function Login() {
   };
 
   return (
-    <section className="max-w-md mx-auto px-6 py-16 bg-white border border-line rounded shadow-sm mt-16 text-ink page-enter font-body">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold uppercase tracking-wider text-navy">Sign In</h1>
-        <p className="text-xs text-gray-500 mt-2.5 uppercase tracking-widest font-semibold">
+    <section className="w-full max-w-md mx-auto px-4 sm:px-6 py-10 sm:py-16 bg-white border border-line rounded-none sm:rounded shadow-sm mt-0 sm:mt-12 text-ink page-enter font-body min-h-[calc(100vh-7rem)] sm:min-h-0 flex flex-col justify-center">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-bold uppercase tracking-wider text-navy">Sign In</h1>
+        <p className="text-[11px] sm:text-xs text-gray-500 mt-2.5 uppercase tracking-widest font-semibold px-2 sm:px-0">
           Unlock your wardrobe credentials
         </p>
       </div>
@@ -47,7 +47,7 @@ export default function Login() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-line rounded px-4 py-3 text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-medium"
+            className="w-full border border-line rounded px-4 py-3 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-medium"
             placeholder="name@example.com"
           />
         </div>
@@ -61,7 +61,7 @@ export default function Login() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-line rounded px-4 py-3 text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-medium"
+            className="w-full border border-line rounded px-4 py-3 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-medium"
             placeholder="••••••••"
           />
           <div className="mt-2 text-right">
@@ -77,13 +77,13 @@ export default function Login() {
         <button
           disabled={submitting}
           type="submit"
-          className="w-full py-3.5 text-xs font-bold uppercase tracking-widest bg-navy text-white hover:opacity-95 active:scale-95 transition-all rounded shadow-md flex items-center justify-center disabled:opacity-50"
+          className="w-full py-3.5 text-sm sm:text-xs font-bold uppercase tracking-widest bg-navy text-white hover:opacity-95 active:scale-95 transition-all rounded shadow-md flex items-center justify-center disabled:opacity-50"
         >
           {submitting ? "VERIFYING..." : "SIGN IN"}
         </button>
       </form>
 
-      <div className="mt-8 pt-6 border-t border-line text-center text-xs text-gray-500 font-semibold">
+      <div className="mt-8 pt-6 border-t border-line text-center text-xs text-gray-500 font-semibold px-2 sm:px-0">
         <span>New to Dominion Clothing? </span>
         <Link
           to={`/signup?redirect=${encodeURIComponent(redirect)}`}

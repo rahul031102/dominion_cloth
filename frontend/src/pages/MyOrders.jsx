@@ -99,28 +99,28 @@ export default function MyOrders() {
   }
 
   return (
-    <section className="max-w-4xl mx-auto px-4 md:px-8 py-10 page-enter bg-paper text-ink font-body">
+    <section className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-10 page-enter bg-paper text-ink font-body">
       
       {/* Title */}
-      <div className="border-b border-line pb-4 mb-8">
-        <h1 className="text-xl md:text-2xl font-bold uppercase tracking-wider text-navy">
+      <div className="border-b border-line pb-4 mb-6 sm:mb-8">
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold uppercase tracking-wider text-navy">
           My Order History
         </h1>
-        <p className="text-xs text-gray-500 mt-1 uppercase tracking-wide">
+        <p className="text-[11px] sm:text-xs text-gray-500 mt-1 uppercase tracking-wide">
           Review recent transactions, tracking details, and items dispatched
         </p>
       </div>
 
       {orders.length === 0 ? (
-        <div className="text-center py-20 bg-white border border-line rounded shadow-sm">
+        <div className="text-center py-16 sm:py-20 px-4 bg-white border border-line rounded shadow-sm">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-4 text-navy opacity-80">
             <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
             <line x1="2" y1="10" x2="22" y2="10" />
             <path d="M12 14v4" />
             <path d="M10 18h4" />
           </svg>
-          <h2 className="text-base font-bold text-ink uppercase tracking-wider">No Orders Placed Yet</h2>
-          <p className="text-xs text-gray-500 mt-2.5 uppercase tracking-wider leading-relaxed">
+          <h2 className="text-sm sm:text-base font-bold text-ink uppercase tracking-wider">No Orders Placed Yet</h2>
+          <p className="text-[11px] sm:text-xs text-gray-500 mt-2.5 uppercase tracking-wider leading-relaxed px-2 sm:px-0">
             Your credentials have no matching transactions. Explore the store to place an order.
           </p>
           <Link
@@ -139,8 +139,8 @@ export default function MyOrders() {
             >
               
               {/* Order Card Header */}
-              <div className="bg-[#F4F2EC]/40 border-b border-line px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
-                <div className="grid grid-cols-2 md:flex md:gap-8 gap-4 font-semibold text-gray-600">
+              <div className="bg-[#F4F2EC]/40 border-b border-line px-4 sm:px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:gap-8 gap-4 font-semibold text-gray-600">
                   <div>
                     <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-0.5">DATE PLACED</span>
                     <span>{new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</span>
@@ -155,7 +155,7 @@ export default function MyOrders() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3">
                   <span className="px-3 py-1 rounded text-[10px] font-extrabold uppercase tracking-widest border bg-navy/5 text-navy border-navy/20">
                     Payment: {o.paymentStatus}
                   </span>
@@ -174,7 +174,7 @@ export default function MyOrders() {
                   {(o.status === "Processing" || o.status === "Confirmed") && (
                     <button
                       onClick={() => handleCancelOrder(o._id)}
-                      className="px-3.5 py-1.5 border border-crimson/30 hover:border-crimson text-crimson bg-white hover:bg-crimson/5 text-[10px] font-extrabold uppercase tracking-widest rounded transition-all active:scale-95"
+                      className="w-full sm:w-auto px-3.5 py-1.5 border border-crimson/30 hover:border-crimson text-crimson bg-white hover:bg-crimson/5 text-[10px] font-extrabold uppercase tracking-widest rounded transition-all active:scale-95"
                     >
                       Cancel Order
                     </button>
@@ -184,7 +184,7 @@ export default function MyOrders() {
                   {o.status === "Delivered" && (
                     <button
                       onClick={() => handleReturnOrder(o._id)}
-                      className="px-3.5 py-1.5 border border-gray-400 hover:border-navy text-gray-700 hover:text-navy bg-white hover:bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest rounded transition-all active:scale-95"
+                      className="w-full sm:w-auto px-3.5 py-1.5 border border-gray-400 hover:border-navy text-gray-700 hover:text-navy bg-white hover:bg-gray-50 text-[10px] font-extrabold uppercase tracking-widest rounded transition-all active:scale-95"
                     >
                       Return Order
                     </button>
@@ -193,16 +193,16 @@ export default function MyOrders() {
               </div>
 
               {/* Order Card Body */}
-              <div className="p-5 grid md:grid-cols-3 gap-8">
+              <div className="p-4 sm:p-5 grid md:grid-cols-3 gap-6 sm:gap-8">
                 
                 {/* Items column */}
                 <div className="md:col-span-2 space-y-4">
-                  <h4 className="text-[10px] font-bold text-navy uppercase tracking-widest mb-1">
+                    <h4 className="text-[10px] font-bold text-navy uppercase tracking-widest mb-1">
                     ORDER MANIFEST DETAILS
                   </h4>
                   <div className="space-y-3.5">
                     {o.items.map((item, idx) => (
-                      <div key={idx} className="flex gap-4 items-center bg-paper/20 p-2 border border-line/50 rounded">
+                        <div key={idx} className="flex gap-3 sm:gap-4 items-center bg-paper/20 p-2 border border-line/50 rounded">
                         <div className="flex-1 min-w-0">
                           <h5 className="font-bold text-xs uppercase text-ink tracking-wide truncate">{item.name}</h5>
                           <p className="text-[10px] text-gray-500 font-medium uppercase mt-0.5">
@@ -232,7 +232,7 @@ export default function MyOrders() {
               </div>
 
               {/* Tracker Timeline Footer */}
-              <div className="border-t border-line px-5 py-5 bg-white">
+              <div className="border-t border-line px-4 sm:px-5 py-5 bg-white">
                 <h4 className="text-[10px] font-bold text-navy uppercase tracking-widest mb-4">
                   REALTIME DELIVERY PROGRESS
                 </h4>
@@ -260,12 +260,12 @@ export default function MyOrders() {
                 )}
 
                 {o.status !== "Cancelled" && o.status !== "Returned" && (
-                  <div className="relative py-4 mb-2 flex items-center justify-between">
+                  <div className="relative py-4 mb-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-0">
                     {/* Connector lines behind steps */}
-                    <div className="absolute left-[10%] right-[10%] h-0.5 bg-line -z-10 top-1/2 -translate-y-1/2" />
+                    <div className="hidden sm:block absolute left-[10%] right-[10%] h-0.5 bg-line -z-10 top-1/2 -translate-y-1/2" />
                     
                     {/* Dynamic segment progression coloring */}
-                    <div className="absolute left-[10%] right-[10%] h-0.5 -z-10 top-1/2 -translate-y-1/2 flex">
+                    <div className="hidden sm:flex absolute left-[10%] right-[10%] h-0.5 -z-10 top-1/2 -translate-y-1/2">
                       {STEPS.slice(0, -1).map((_, idx) => (
                         <div
                           key={idx}
@@ -277,11 +277,11 @@ export default function MyOrders() {
                     {STEPS.map((step, idx) => {
                       const statusClass = getStepStatusClass(o.status, step);
                       return (
-                        <div key={step} className="flex flex-col items-center flex-1 text-center">
+                        <div key={step} className="flex flex-row sm:flex-col items-center sm:flex-1 text-left sm:text-center gap-3 sm:gap-0">
                           <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] transition-all ${statusClass}`}>
                             {idx + 1}
                           </div>
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 mt-2 block max-w-[80px]">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 sm:mt-2 block max-w-[80px]">
                             {step}
                           </span>
                         </div>

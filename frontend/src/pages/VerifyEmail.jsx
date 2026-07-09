@@ -34,7 +34,7 @@ export default function VerifyEmail() {
   }, [token, showToast]);
 
   return (
-    <section className="max-w-md mx-auto px-6 py-20 text-center bg-white border border-line rounded shadow-sm mt-16 text-ink page-enter font-body">
+    <section className="w-full max-w-md mx-auto px-4 sm:px-6 py-12 sm:py-20 text-center bg-white border border-line rounded-none sm:rounded shadow-sm mt-0 sm:mt-12 text-ink page-enter font-body min-h-[calc(100vh-7rem)] sm:min-h-0 flex items-center justify-center">
       {verifying && (
         <div className="flex flex-col items-center">
           <div className="w-12 h-12 border-4 border-line border-t-navy rounded-full animate-spin mb-4" />
@@ -50,12 +50,12 @@ export default function VerifyEmail() {
             </svg>
           </div>
           <h1 className="text-xl font-bold uppercase mb-3 tracking-wider text-navy">ACCOUNT VERIFIED</h1>
-          <p className="text-sm text-gray-600 mb-8 leading-relaxed uppercase">
+          <p className="text-sm text-gray-600 mb-8 leading-relaxed uppercase px-2 sm:px-0">
             Your registration is confirmed. You can now log in to place orders and manage your wardrobe.
           </p>
           <button
             onClick={() => navigate("/login")}
-            className="w-full py-3.5 text-xs font-bold uppercase tracking-wider bg-navy text-white rounded hover:opacity-90 transition-all shadow"
+            className="w-full py-3.5 text-sm sm:text-xs font-bold uppercase tracking-wider bg-navy text-white rounded hover:opacity-90 transition-all shadow"
           >
             Go to Login
           </button>
@@ -72,12 +72,12 @@ export default function VerifyEmail() {
             </svg>
           </div>
           <h1 className="text-xl font-bold uppercase mb-3 tracking-wider text-crimson">VERIFICATION FAILED</h1>
-          <p className="text-sm text-gray-600 mb-8 leading-relaxed uppercase">
+          <p className="text-sm text-gray-600 mb-8 leading-relaxed uppercase px-2 sm:px-0">
             {error}
           </p>
           <button
             onClick={() => navigate("/login")}
-            className="w-full py-3.5 text-xs font-bold uppercase tracking-wider border border-line text-gray-600 rounded hover:bg-paper transition-all"
+            className="w-full py-3.5 text-sm sm:text-xs font-bold uppercase tracking-wider border border-line text-gray-600 rounded hover:bg-paper transition-all"
           >
             Back to Sign In
           </button>

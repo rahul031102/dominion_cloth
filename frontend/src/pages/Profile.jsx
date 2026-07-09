@@ -163,23 +163,23 @@ export default function Profile() {
   }
 
   return (
-    <section className="max-w-5xl mx-auto px-4 md:px-8 py-10 page-enter bg-paper text-ink font-body">
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-10 page-enter bg-paper text-ink font-body">
       
       {/* Top Welcome Panel */}
-      <div className="border border-line bg-white p-6 rounded shadow-sm mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="border border-line bg-white p-4 sm:p-6 rounded shadow-sm mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-xl font-bold uppercase tracking-wider text-navy">
+          <h1 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-navy">
             Dashboard Profile
           </h1>
-          <p className="text-xs text-gray-500 mt-1 uppercase tracking-wide">
+          <p className="text-[11px] sm:text-xs text-gray-500 mt-1 uppercase tracking-wide break-all sm:break-normal">
             Registered: {user?.email}
           </p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
           <Link
             to="/orders"
-            className="px-4 py-2 bg-navy text-white text-xs font-bold uppercase rounded shadow hover:opacity-90 transition-all tracking-wider"
+            className="w-full sm:w-auto text-center px-4 py-2 bg-navy text-white text-xs font-bold uppercase rounded shadow hover:opacity-90 transition-all tracking-wider"
           >
             Track Orders
           </Link>
@@ -189,23 +189,23 @@ export default function Profile() {
               showToast("Logged out successfully.");
               navigate("/");
             }}
-            className="px-4 py-2 border border-line text-crimson text-xs font-bold uppercase rounded hover:bg-paper transition-all tracking-wider"
+            className="w-full sm:w-auto px-4 py-2 border border-line text-crimson text-xs font-bold uppercase rounded hover:bg-paper transition-all tracking-wider"
           >
             Logout
           </button>
         </div>
       </div>
 
-      <div className="grid md:grid-cols-4 gap-8">
+      <div className="grid md:grid-cols-4 gap-6 sm:gap-8">
         
         {/* Left Side: Navigation Tabs */}
-        <div className="md:col-span-1 border border-line bg-white p-4 rounded shadow-sm h-max space-y-1">
+        <div className="md:col-span-1 border border-line bg-white p-3 sm:p-4 rounded shadow-sm h-max space-y-1 flex md:block gap-2 md:gap-0 overflow-x-auto md:overflow-visible">
           <button
             onClick={() => {
               setActiveSubTab("info");
               setShowAddressForm(false);
             }}
-            className={`w-full text-left px-4 py-3 rounded text-xs font-bold uppercase tracking-wider transition-all ${
+            className={`flex-1 md:w-full text-left px-3 sm:px-4 py-3 rounded text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
               activeSubTab === "info" ? "bg-navy text-white" : "text-gray-600 hover:bg-[#FAFAF8] hover:text-navy"
             }`}
           >
@@ -216,7 +216,7 @@ export default function Profile() {
               setActiveSubTab("addresses");
               setShowAddressForm(false);
             }}
-            className={`w-full text-left px-4 py-3 rounded text-xs font-bold uppercase tracking-wider transition-all ${
+            className={`flex-1 md:w-full text-left px-3 sm:px-4 py-3 rounded text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
               activeSubTab === "addresses" ? "bg-navy text-white" : "text-gray-600 hover:bg-[#FAFAF8] hover:text-navy"
             }`}
           >
@@ -225,16 +225,16 @@ export default function Profile() {
         </div>
 
         {/* Right Side: Active Workspace */}
-        <div className="md:col-span-3 border border-line bg-white p-6 md:p-8 rounded shadow-sm h-max">
+        <div className="md:col-span-3 border border-line bg-white p-4 sm:p-6 md:p-8 rounded shadow-sm h-max">
           
           {/* PERSONAL DETAILS WORKSPACE */}
           {activeSubTab === "info" && (
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-navy border-b border-line pb-3 mb-6">
+              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-navy border-b border-line pb-3 mb-6">
                 Personal details
               </h2>
               
-              <form onSubmit={handleProfileSubmit} className="space-y-4 max-w-md">
+              <form onSubmit={handleProfileSubmit} className="space-y-4 max-w-md w-full">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1.5">
                     Account Display Name
@@ -244,7 +244,7 @@ export default function Profile() {
                     type="text"
                     value={profile.name}
                     onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                    className="w-full border border-line rounded px-4 py-3 text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-semibold"
+                    className="w-full border border-line rounded px-4 py-3 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-semibold"
                   />
                 </div>
 
@@ -256,7 +256,7 @@ export default function Profile() {
                     type="text"
                     value={profile.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                    className="w-full border border-line rounded px-4 py-3 text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-semibold"
+                    className="w-full border border-line rounded px-4 py-3 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-semibold"
                     placeholder="Enter phone number"
                   />
                 </div>
@@ -264,7 +264,7 @@ export default function Profile() {
                 <button
                   disabled={updatingProfile}
                   type="submit"
-                  className="px-6 py-3 bg-navy text-white text-xs font-bold uppercase tracking-widest rounded shadow hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                  className="w-full sm:w-auto px-6 py-3 bg-navy text-white text-sm sm:text-xs font-bold uppercase tracking-widest rounded shadow hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
                 >
                   {updatingProfile ? "SAVING..." : "Save Changes"}
                 </button>
@@ -275,13 +275,13 @@ export default function Profile() {
           {/* SAVED ADDRESSES WORKSPACE */}
           {activeSubTab === "addresses" && !showAddressForm && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center border-b border-line pb-3 mb-6">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-navy">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b border-line pb-3 mb-6">
+                <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-navy">
                   Saved Delivery Locations
                 </h2>
                 <button
                   onClick={openAddAddress}
-                  className="bg-navy text-white text-[10px] font-bold uppercase tracking-wider px-3.5 py-2 rounded shadow hover:opacity-90 transition-all"
+                  className="w-full sm:w-auto bg-navy text-white text-[10px] font-bold uppercase tracking-wider px-3.5 py-2 rounded shadow hover:opacity-90 transition-all"
                 >
                   Add Address
                 </button>
@@ -308,13 +308,13 @@ export default function Profile() {
                         </span>
                       )}
 
-                      <h4 className="font-bold text-xs uppercase tracking-wide mb-1 text-ink">{profile.name}</h4>
+                      <h4 className="font-bold text-xs uppercase tracking-wide mb-1 text-ink break-words">{profile.name}</h4>
                       <p className="text-gray-500 text-[11px] font-semibold mb-2">{a.phone}</p>
                       <p className="text-gray-400 leading-relaxed font-sans text-xs mb-4">
                         {a.street}, {a.city}, {a.state} - {a.postalCode}, {a.country}
                       </p>
 
-                      <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider mt-2 border-t border-line/60 pt-3">
+                      <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[10px] font-bold uppercase tracking-wider mt-2 border-t border-line/60 pt-3">
                         <button onClick={() => openEditAddress(a)} className="text-navy hover:underline">
                           Edit
                         </button>
@@ -337,11 +337,11 @@ export default function Profile() {
           {/* SAVED ADDRESS FORM EDITOR */}
           {activeSubTab === "addresses" && showAddressForm && (
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-navy border-b border-line pb-3 mb-6">
+              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-navy border-b border-line pb-3 mb-6">
                 {editingAddressId ? "Modify Address" : "Add Delivery Address"}
               </h2>
 
-              <form onSubmit={handleAddressSubmit} className="space-y-4 max-w-md">
+              <form onSubmit={handleAddressSubmit} className="space-y-4 max-w-md w-full">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1.5">
                     Street Address / Flat No.
@@ -352,7 +352,7 @@ export default function Profile() {
                     type="text"
                     value={addressForm.street}
                     onChange={handleAddressInputChange}
-                    className="w-full border border-line rounded px-4 py-3 text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-semibold"
+                    className="w-full border border-line rounded px-4 py-3 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-semibold"
                     placeholder="Flat/House No., Building Name, Street"
                   />
                 </div>
