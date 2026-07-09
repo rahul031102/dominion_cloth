@@ -175,9 +175,9 @@ export default function ProductDetail() {
   const wished = inWishlist(product._id);
 
   return (
-    <section className="max-w-7xl mx-auto px-4 md:px-8 pt-8 pb-28 md:pb-20 page-enter bg-paper text-ink font-body">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pt-6 sm:pt-8 pb-24 md:pb-20 page-enter bg-paper text-ink font-body">
       {/* Breadcrumbs */}
-      <div className="text-xs text-gray-400 mb-6 flex items-center gap-1.5 font-semibold">
+      <div className="text-[11px] sm:text-xs text-gray-400 mb-5 sm:mb-6 flex items-center gap-1.5 font-semibold flex-wrap leading-relaxed">
         <Link to="/" className="hover:text-navy">Home</Link>
         <span>/</span>
         <Link to="/products" className="hover:text-navy">Shop</Link>
@@ -187,7 +187,7 @@ export default function ProductDetail() {
         <span className="text-ink font-bold truncate max-w-[200px]">{product.name}</span>
       </div>
 
-      <div className="grid md:grid-cols-12 gap-8 md:gap-12">
+      <div className="grid md:grid-cols-12 gap-6 sm:gap-8 md:gap-12">
         {/* Left Column: Image Gallery Thumbnails */}
         <div className="md:col-span-1 flex md:flex-col gap-2 order-2 md:order-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0">
           {galleryImages.map((img, idx) => {
@@ -229,15 +229,15 @@ export default function ProductDetail() {
 
         {/* Right Column: Variant & Detail Specs */}
         <div className="md:col-span-5 order-3 h-max">
-          <h1 className="font-extrabold text-xl md:text-2xl text-ink tracking-wide uppercase">
+          <h1 className="font-extrabold text-lg sm:text-xl md:text-2xl text-ink tracking-wide uppercase break-words">
             {product.brand}
           </h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1 mb-3">
+          <p className="text-sm md:text-base text-gray-600 mt-1 mb-3 break-words">
             {product.name}
           </p>
 
           {/* Rating Badge */}
-          <div className="inline-flex items-center gap-1.5 border border-line bg-white rounded px-2.5 py-1 text-xs font-bold text-navy mb-5 cursor-pointer">
+          <div className="inline-flex flex-wrap items-center gap-1.5 border border-line bg-white rounded px-2.5 py-1 text-xs font-bold text-navy mb-5 cursor-pointer">
             <span>{product.rating ? product.rating.toFixed(1) : "0.0"}</span>
             <span className="text-navy text-xs">★</span>
             <span className="text-line">|</span>
@@ -386,6 +386,26 @@ export default function ProductDetail() {
             </button>
           </div>
 
+          <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <button
+              onClick={handleAdd}
+              disabled={isOutOfStock}
+              className="w-full py-3.5 text-xs uppercase tracking-wider font-extrabold bg-navy text-white rounded shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Add to Bag
+            </button>
+            <button
+              onClick={handleWishlistToggle}
+              className={`w-full py-3.5 text-xs uppercase tracking-wider font-extrabold border rounded transition-all flex items-center justify-center gap-2 ${
+                wished
+                  ? "bg-crimson/5 text-crimson border-crimson/35"
+                  : "border-line text-ink bg-white hover:border-navy hover:text-navy"
+              }`}
+            >
+              {wished ? "Wishlisted" : "Wishlist"}
+            </button>
+          </div>
+
           <p className="hidden md:block text-[11px] text-gray-500 text-center font-semibold mt-4">
             Easy 14 days returns · Free delivery on orders above ₹2,999
           </p>
@@ -393,27 +413,15 @@ export default function ProductDetail() {
       </div>
 
       {/* Reviews Section */}
-      <div className="mt-16 border-t border-line pt-12 grid md:grid-cols-12 gap-10">
+      <div className="mt-12 sm:mt-16 border-t border-line pt-10 sm:pt-12 grid md:grid-cols-12 gap-8 sm:gap-10">
         
         {/* Left Column: Review Summary & Write Form */}
-        <div className="md:col-span-5 space-y-8">
+        <div className="md:col-span-5 space-y-6 sm:space-y-8">
           <div>
-
-          <div className="grid grid-cols-3 gap-2.5 mb-6">
-            <div className="bg-white border border-line rounded p-3 text-[10px] font-bold uppercase tracking-wider text-gray-600">
-              Secure checkout
-            </div>
-            <div className="bg-white border border-line rounded p-3 text-[10px] font-bold uppercase tracking-wider text-gray-600">
-              Easy returns
-            </div>
-            <div className="bg-white border border-line rounded p-3 text-[10px] font-bold uppercase tracking-wider text-gray-600">
-              Fast dispatch
-            </div>
-          </div>
             <h2 className="text-lg font-bold uppercase tracking-wide border-l-4 border-navy pl-3 text-ink mb-4">
               Ratings & Reviews
             </h2>
-            <div className="flex items-baseline gap-3">
+            <div className="flex items-baseline gap-3 flex-wrap">
               <span className="text-4xl font-extrabold text-navy">
                 {product.rating ? product.rating.toFixed(1) : "0.0"}
               </span>

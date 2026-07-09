@@ -130,26 +130,26 @@ export default function Products() {
   };
 
   return (
-    <section className="max-w-7xl mx-auto px-4 md:px-8 pt-6 pb-16 bg-paper text-ink font-body">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pt-5 sm:pt-6 pb-12 sm:pb-16 bg-paper text-ink font-body">
       
       {/* Search Header Banner */}
-      <div className="border-b border-line pb-4 mb-6 flex flex-col md:flex-row justify-between items-start md:items-baseline gap-2">
+      <div className="border-b border-line pb-4 mb-5 sm:mb-6 flex flex-col md:flex-row justify-between items-start md:items-baseline gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold uppercase tracking-wider text-navy">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold uppercase tracking-wider text-navy break-words">
             {searchQuery ? `Search Results for "${searchQuery}"` : activeCategory === "All" ? "Shop All Collection" : `${activeCategory} Collection`}
           </h1>
-          <p className="text-xs text-gray-500 mt-1 uppercase tracking-wide">
+          <p className="text-[11px] sm:text-xs text-gray-500 mt-1 uppercase tracking-wide">
             {loading ? "Loading items..." : `${totalResults} matches found`}
           </p>
         </div>
 
         {/* Sort Select */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SORT BY</label>
           <select
             value={sort}
             onChange={(e) => updateUrlParams({ sort: e.target.value })}
-            className="text-xs font-bold uppercase tracking-wider bg-white border border-line rounded px-3 py-2 text-ink focus:outline-none focus:border-navy"
+            className="flex-1 md:flex-none text-xs font-bold uppercase tracking-wider bg-white border border-line rounded px-3 py-2 text-ink focus:outline-none focus:border-navy"
           >
             <option value="newest">New Arrivals</option>
             <option value="price_asc">Price: Low to High</option>
@@ -176,11 +176,11 @@ export default function Products() {
         ))}
       </div>
 
-      <div className="grid md:grid-cols-4 gap-8">
+      <div className="grid lg:grid-cols-4 gap-6 sm:gap-8">
         
         {/* Left Column: Filter Panel (Desktop View) */}
-        <div className="md:col-span-1 space-y-6">
-          <div className="border border-line bg-white rounded p-5 space-y-6 shadow-sm">
+        <div className="lg:col-span-1 space-y-4 sm:space-y-6">
+          <div className="border border-line bg-white rounded p-4 sm:p-5 space-y-5 sm:space-y-6 shadow-sm">
             <div className="flex justify-between items-center border-b border-line pb-2">
               <h3 className="text-xs font-extrabold text-navy uppercase tracking-widest">FILTERS</h3>
               <button
@@ -194,9 +194,9 @@ export default function Products() {
             {/* Brands Filter */}
             <div>
               <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2.5">BRAND</h4>
-              <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2 sm:gap-1.5 max-h-none lg:max-h-40 overflow-y-visible lg:overflow-y-auto pr-0 lg:pr-1">
                 {BRANDS.map((b) => (
-                  <label key={b} className="flex items-center gap-2 cursor-pointer text-xs text-gray-700 font-semibold uppercase hover:text-navy">
+                  <label key={b} className="flex items-center gap-2 cursor-pointer text-[11px] sm:text-xs text-gray-700 font-semibold uppercase hover:text-navy min-w-0">
                     <input
                       type="checkbox"
                       checked={selectedBrands.includes(b)}
@@ -212,25 +212,24 @@ export default function Products() {
             {/* Price Filter */}
             <div>
               <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2.5">PRICE RANGE</h4>
-              <form onSubmit={applyPriceFilter} className="flex gap-2 items-center">
+              <form onSubmit={applyPriceFilter} className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
                 <input
                   type="number"
                   placeholder="Min"
                   value={minPriceInput}
                   onChange={(e) => setMinPriceInput(e.target.value)}
-                  className="w-full border border-line rounded px-2.5 py-1.5 text-xs text-ink focus:outline-none focus:border-navy"
+                  className="w-full border border-line rounded px-2.5 py-2 text-sm sm:text-xs text-ink focus:outline-none focus:border-navy"
                 />
-                <span className="text-gray-400 font-sans">&ndash;</span>
                 <input
                   type="number"
                   placeholder="Max"
                   value={maxPriceInput}
                   onChange={(e) => setMaxPriceInput(e.target.value)}
-                  className="w-full border border-line rounded px-2.5 py-1.5 text-xs text-ink focus:outline-none focus:border-navy"
+                  className="w-full border border-line rounded px-2.5 py-2 text-sm sm:text-xs text-ink focus:outline-none focus:border-navy"
                 />
                 <button
                   type="submit"
-                  className="px-3 py-1.5 bg-navy text-white text-[10px] font-bold rounded uppercase hover:opacity-90"
+                  className="px-3 py-2 bg-navy text-white text-[10px] font-bold rounded uppercase hover:opacity-90"
                 >
                   Go
                 </button>
@@ -240,7 +239,7 @@ export default function Products() {
             {/* Sizes Filter */}
             <div>
               <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2.5">SIZE</h4>
-              <div className="grid grid-cols-4 gap-1.5">
+              <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-1.5">
                 {SIZES.map((sz) => {
                   const isSel = selectedSizes.includes(sz);
                   return (
@@ -289,18 +288,18 @@ export default function Products() {
         </div>
 
         {/* Right Column: Catalog Grid */}
-        <div className="md:col-span-3 space-y-10">
+        <div className="lg:col-span-3 space-y-8 sm:space-y-10">
           
           {loading ? (
             <ProductGridSkeleton count={8} />
           ) : products.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {products.map((p) => (
                 <ProductCard key={p._id} product={p} />
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-white border border-line rounded p-8">
+            <div className="text-center py-16 sm:py-20 bg-white border border-line rounded p-6 sm:p-8">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-4 text-navy opacity-80">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="8" y1="12" x2="16" y2="12" />
@@ -318,7 +317,7 @@ export default function Products() {
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-1.5 pt-6 border-t border-line/60">
+            <div className="flex flex-wrap justify-center items-center gap-1.5 pt-6 border-t border-line/60">
               <button
                 disabled={page === 1}
                 onClick={() => updateUrlParams({ page: Math.max(1, page - 1) })}

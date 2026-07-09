@@ -294,24 +294,24 @@ export default function AdminDashboard() {
   }
 
   return (
-    <section className="max-w-7xl mx-auto px-4 md:px-8 py-8 page-enter bg-paper text-ink font-body">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-8 page-enter bg-paper text-ink font-body">
       
       {/* Title */}
-      <div className="border-b border-line pb-4 mb-8 flex flex-col sm:flex-row sm:items-baseline justify-between gap-4">
+      <div className="border-b border-line pb-4 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-baseline justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold uppercase tracking-wider text-navy">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold uppercase tracking-wider text-navy break-words">
             Admin Console
           </h1>
-          <p className="text-xs text-gray-500 mt-1 uppercase tracking-wide">
+          <p className="text-[11px] sm:text-xs text-gray-500 mt-1 uppercase tracking-wide">
             Manage your store catalogs, shipments, and inventory metrics
           </p>
         </div>
 
         {/* Tab Buttons */}
-        <div className="flex gap-2 border border-line rounded p-1 bg-white w-max">
+        <div className="flex gap-2 border border-line rounded p-1 bg-white w-full sm:w-max overflow-x-auto">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`px-4 py-1.5 rounded text-xs font-bold transition-all uppercase ${
+            className={`flex-1 sm:flex-none px-4 py-1.5 rounded text-xs font-bold transition-all uppercase whitespace-nowrap ${
               activeTab === "overview" ? "bg-navy text-white" : "text-gray-600 hover:text-navy"
             }`}
           >
@@ -319,7 +319,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("products")}
-            className={`px-4 py-1.5 rounded text-xs font-bold transition-all uppercase ${
+            className={`flex-1 sm:flex-none px-4 py-1.5 rounded text-xs font-bold transition-all uppercase whitespace-nowrap ${
               activeTab === "products" ? "bg-navy text-white" : "text-gray-600 hover:text-navy"
             }`}
           >
@@ -327,7 +327,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("orders")}
-            className={`px-4 py-1.5 rounded text-xs font-bold transition-all uppercase ${
+            className={`flex-1 sm:flex-none px-4 py-1.5 rounded text-xs font-bold transition-all uppercase whitespace-nowrap ${
               activeTab === "orders" ? "bg-navy text-white" : "text-gray-600 hover:text-navy"
             }`}
           >
@@ -340,7 +340,7 @@ export default function AdminDashboard() {
       {activeTab === "overview" && (
         <div className="space-y-8">
           {/* Status widgets */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <div className="bg-white border border-line p-6 rounded shadow-sm">
               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1">
                 Gross Turnover
@@ -410,7 +410,7 @@ export default function AdminDashboard() {
 
           <div className="bg-white border border-line rounded overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-xs min-w-[760px]">
                 <thead className="bg-[#F4F2EC] border-b border-line text-navy uppercase tracking-wider font-bold">
                   <tr>
                     <th className="px-6 py-4">Item details</th>
@@ -572,10 +572,10 @@ export default function AdminDashboard() {
 
       {/* --- FORM MODAL FOR CREATE/EDIT PRODUCT --- */}
       {showModal && createPortal(
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-line rounded shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto page-enter">
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white border border-line rounded-none sm:rounded shadow-2xl w-full sm:max-w-lg h-[90vh] sm:h-auto sm:max-h-[85vh] overflow-y-auto page-enter">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-line bg-paper/50">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-line bg-paper/50 sticky top-0 z-10">
               <h3 className="font-bold text-xs uppercase tracking-wider text-navy">
                 {editingId ? "Edit Product Information" : "Create New Catalog SKU"}
               </h3>
@@ -588,8 +588,8 @@ export default function AdminDashboard() {
             </div>
 
             {/* Modal Body Form */}
-            <form onSubmit={handleFormSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleFormSubmit} className="p-4 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">
                     Product Title
@@ -599,7 +599,7 @@ export default function AdminDashboard() {
                     name="name"
                     value={form.name}
                     onChange={handleInputChange}
-                    className="w-full border border-line rounded px-3 py-2 text-xs bg-white text-ink focus:outline-none focus:border-navy"
+                    className="w-full border border-line rounded px-3 py-2 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy"
                     placeholder="E.g. Linen Blend Shirt"
                   />
                 </div>
@@ -612,13 +612,13 @@ export default function AdminDashboard() {
                     name="brand"
                     value={form.brand}
                     onChange={handleInputChange}
-                    className="w-full border border-line rounded px-3 py-2 text-xs bg-white text-ink focus:outline-none focus:border-navy"
+                    className="w-full border border-line rounded px-3 py-2 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy"
                     placeholder="E.g. Tommy Hilfiger"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">
                     Category
@@ -627,7 +627,7 @@ export default function AdminDashboard() {
                     name="category"
                     value={form.category}
                     onChange={handleInputChange}
-                    className="w-full border border-line rounded px-3 py-2 text-xs bg-white text-ink focus:outline-none focus:border-navy"
+                    className="w-full border border-line rounded px-3 py-2 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy"
                   >
                     {CATEGORIES.map((c) => (
                       <option key={c} value={c}>{c}</option>
@@ -642,7 +642,7 @@ export default function AdminDashboard() {
                     name="tag"
                     value={form.tag}
                     onChange={handleInputChange}
-                    className="w-full border border-line rounded px-3 py-2 text-xs bg-white text-ink focus:outline-none focus:border-navy"
+                    className="w-full border border-line rounded px-3 py-2 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy"
                   >
                     <option value="">None (Regular)</option>
                     <option value="New">New</option>
@@ -658,7 +658,7 @@ export default function AdminDashboard() {
                     name="stock"
                     value={form.stock}
                     onChange={handleInputChange}
-                    className="w-full border border-line rounded px-3 py-2 text-xs bg-white text-ink focus:outline-none focus:border-navy"
+                    className="w-full border border-line rounded px-3 py-2 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy"
                   />
                 </div>
               </div>
@@ -736,7 +736,7 @@ export default function AdminDashboard() {
                       name="image"
                       value={form.image}
                       onChange={handleInputChange}
-                      className="w-full border border-line rounded px-3 py-2 text-xs bg-white text-ink focus:outline-none focus:border-navy"
+                      className="w-full border border-line rounded px-3 py-2 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy"
                       placeholder="https://res.cloudinary.com/..."
                     />
                   </div>

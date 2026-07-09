@@ -257,54 +257,54 @@ export default function Checkout() {
   }
 
   return (
-    <section className="max-w-5xl mx-auto px-4 md:px-8 py-10 grid md:grid-cols-2 gap-10 bg-paper text-ink font-body relative">
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-10 grid md:grid-cols-2 gap-6 sm:gap-10 bg-paper text-ink font-body relative">
       
       {/* Left Column: Address Form */}
-      <div className="border border-line bg-white p-6 md:p-8 rounded shadow-sm">
-        <h1 className="text-lg md:text-xl font-bold uppercase text-ink tracking-wider mb-6 border-b border-line pb-3">
+      <div className="border border-line bg-white p-5 sm:p-6 md:p-8 rounded shadow-sm">
+        <h1 className="text-base sm:text-lg md:text-xl font-bold uppercase text-ink tracking-wider mb-5 sm:mb-6 border-b border-line pb-3">
           Delivery Address
         </h1>
         
         <form onSubmit={handlePlaceOrder} className="space-y-4">
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1.5">Full Name</label>
+            <label className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1.5">Full Name</label>
             <input
               required
               name="customerName"
               value={form.customerName}
               onChange={handleChange}
-              className="w-full border border-line rounded px-4 py-3 text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-medium"
+              className="w-full border border-line rounded px-4 py-3 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-medium"
               placeholder="Enter full name"
             />
           </div>
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1.5">Mobile Number</label>
+            <label className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1.5">Mobile Number</label>
             <input
               required
               name="phone"
               value={form.phone}
               onChange={handleChange}
-              className="w-full border border-line rounded px-4 py-3 text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-medium"
+              className="w-full border border-line rounded px-4 py-3 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-medium"
               placeholder="+91 XXXXX XXXXX"
             />
           </div>
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1.5">Delivery Location</label>
+            <label className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1.5">Delivery Location</label>
             <textarea
               required
               name="address"
               value={form.address}
               onChange={handleChange}
               rows={3}
-              className="w-full border border-line rounded px-4 py-3 text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-medium"
+              className="w-full border border-line rounded px-4 py-3 text-sm sm:text-xs bg-white text-ink focus:outline-none focus:border-navy transition-colors font-medium"
               placeholder="Flat/House No., Street Name, City, Pincode"
             />
           </div>
 
           <div className="pt-5 border-t border-line mt-6">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">Payment Method</h4>
+            <h4 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">Payment Method</h4>
             <div className="space-y-2">
-              <label className="flex items-center gap-3 border border-line rounded px-4 py-3 cursor-pointer bg-white hover:border-navy transition-colors">
+              <label className="flex items-start sm:items-center gap-3 border border-line rounded px-4 py-3 cursor-pointer bg-white hover:border-navy transition-colors">
                 <input 
                   type="radio" 
                   name="payment" 
@@ -313,9 +313,9 @@ export default function Checkout() {
                   onChange={() => setPaymentMethod("Razorpay")}
                   className="accent-navy" 
                 />
-                <span className="text-xs font-bold text-ink uppercase">Cards / UPI / Netbanking (Razorpay Gateway)</span>
+                <span className="text-xs font-bold text-ink uppercase leading-relaxed">Cards / UPI / Netbanking (Razorpay Gateway)</span>
               </label>
-              <label className="flex items-center gap-3 border border-line rounded px-4 py-3 cursor-pointer bg-white hover:border-navy transition-colors">
+              <label className="flex items-start sm:items-center gap-3 border border-line rounded px-4 py-3 cursor-pointer bg-white hover:border-navy transition-colors">
                 <input 
                   type="radio" 
                   name="payment" 
@@ -324,7 +324,7 @@ export default function Checkout() {
                   onChange={() => setPaymentMethod("COD")}
                   className="accent-navy" 
                 />
-                <span className="text-xs font-bold text-ink uppercase">Cash on Delivery (COD)</span>
+                <span className="text-xs font-bold text-ink uppercase leading-relaxed">Cash on Delivery (COD)</span>
               </label>
             </div>
             <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-wide">
@@ -334,7 +334,7 @@ export default function Checkout() {
 
           <button
             disabled={placing}
-            className="w-full py-4 mt-6 text-xs font-bold uppercase tracking-widest bg-navy text-white hover:opacity-90 active:scale-95 transition-all rounded shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50"
+            className="w-full py-4 mt-6 text-sm sm:text-xs font-bold uppercase tracking-widest bg-navy text-white hover:opacity-90 active:scale-95 transition-all rounded shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50"
           >
             {placing ? (
               "PROCESSING..."
@@ -354,12 +354,12 @@ export default function Checkout() {
       </div>
 
       {/* Right Column: Order Summary */}
-      <div className="border border-line bg-white p-6 rounded shadow-sm h-max">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-navy mb-4 border-b border-line pb-3">
+      <div className="border border-line bg-white p-5 sm:p-6 rounded shadow-sm h-max">
+        <h2 className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-navy mb-4 border-b border-line pb-3">
           ORDER MANIFEST ({cart.reduce((sum, item) => sum + item.qty, 0)} Items)
         </h2>
         
-        <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1">
+        <div className="space-y-4 max-h-[260px] sm:max-h-[320px] overflow-y-auto pr-1">
           {cart.map((c) => (
             <div key={`${c.product._id}-${c.size}`} className="flex gap-3 bg-paper p-3 rounded border border-line shadow-sm">
               <img
@@ -369,11 +369,11 @@ export default function Checkout() {
               />
               <div className="flex-1 flex flex-col justify-between">
                 <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-ink truncate max-w-[200px]">{c.product.brand}</h4>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-ink truncate max-w-[160px] sm:max-w-[200px]">{c.product.brand}</h4>
                   <p className="text-[10px] text-gray-500 truncate">{c.product.name}</p>
                 </div>
                 <div className="flex justify-between items-baseline mt-1.5">
-                  <span className="text-[10px] font-bold text-navy uppercase tracking-wider">Size: {c.size} · Qty: {c.qty}</span>
+                  <span className="text-[10px] font-bold text-navy uppercase tracking-wider max-w-[120px] sm:max-w-none">Size: {c.size} · Qty: {c.qty}</span>
                   <span className="text-xs font-bold text-ink">
                     ₹{(c.product.price * c.qty).toLocaleString("en-IN")}
                   </span>
@@ -401,19 +401,19 @@ export default function Checkout() {
               </button>
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={couponInput}
                 onChange={(e) => setCouponInput(e.target.value)}
                 placeholder="WELCOME10, SAVE20..."
-                className="flex-1 border border-line rounded px-3 py-2 text-xs bg-white uppercase tracking-wider text-ink focus:outline-none focus:border-navy"
+                className="flex-1 border border-line rounded px-3 py-2 text-sm sm:text-xs bg-white uppercase tracking-wider text-ink focus:outline-none focus:border-navy"
               />
               <button
                 type="button"
                 onClick={handleApplyCoupon}
                 disabled={applyingCoupon || !couponInput.trim()}
-                className="px-4 py-2 bg-navy text-white text-xs font-bold uppercase tracking-wider rounded hover:opacity-90 disabled:opacity-50 transition-all shrink-0"
+                className="px-4 py-2 bg-navy text-white text-sm sm:text-xs font-bold uppercase tracking-wider rounded hover:opacity-90 disabled:opacity-50 transition-all shrink-0"
               >
                 {applyingCoupon ? "APPLYING..." : "APPLY"}
               </button>
